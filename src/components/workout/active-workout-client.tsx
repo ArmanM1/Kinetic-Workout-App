@@ -3,13 +3,34 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState } from "react";
-import { FolderHeart, Heart, Plus, Search, Sparkles, Trash2, X, Zap } from "lucide-react";
+import {
+  AlertTriangle,
+  FolderHeart,
+  Heart,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+  Zap,
+} from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { CustomExerciseDialog } from "@/components/exercises/custom-exercise-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -80,6 +101,13 @@ export function ActiveWorkoutClient() {
   const [restNow, setRestNow] = useState(0);
   const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(null);
   const [keyboardInset, setKeyboardInset] = useState(0);
+  const [pendingDeleteSet, setPendingDeleteSet] = useState<{
+    exerciseId: string;
+    setId: string;
+    exerciseName: string;
+    setNumber: number;
+  } | null>(null);
+  const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -337,10 +365,7 @@ export function ActiveWorkoutClient() {
                 variant="outline"
                 className="border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
                 onClick={() => {
-                  clearActiveSession();
-                  setFinishNotes("");
-                  setFinishDialogOpen(false);
-                  router.push("/app");
+                  setDiscardAlertOpen(true);
                 }}
               >
                 Discard
@@ -360,6 +385,77 @@ export function ActiveWorkoutClient() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={discardAlertOpen} onOpenChange={setDiscardAlertOpen}>
+        <AlertDialogContent className="border border-rose-400/20 bg-zinc-950 text-white">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-rose-500/12 text-rose-300">
+              <AlertTriangle className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Discard this workout?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              This clears the live session and removes any unfinished progress from the screen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="border-white/10 bg-white/[0.03]">
+            <AlertDialogCancel className="border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]">
+              Keep workout
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                clearActiveSession();
+                setFinishNotes("");
+                setFinishDialogOpen(false);
+                router.push("/app");
+              }}
+            >
+              Discard workout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDeleteSet !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteSet(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="border border-rose-400/20 bg-zinc-950 text-white">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-rose-500/12 text-rose-300">
+              <Trash2 className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete this set?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              {pendingDeleteSet
+                ? `${pendingDeleteSet.exerciseName} set ${pendingDeleteSet.setNumber} will be removed.`
+                : "This set will be removed."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="border-white/10 bg-white/[0.03]">
+            <AlertDialogCancel className="border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]">
+              Keep set
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (!pendingDeleteSet) {
+                  return;
+                }
+
+                deleteSet(pendingDeleteSet.exerciseId, pendingDeleteSet.setId);
+                setPendingDeleteSet(null);
+              }}
+            >
+              Delete set
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="ios-page space-y-4" style={{ paddingBottom: `${workoutBottomPadding}px` }}>
         <section className="ios-card space-y-4 rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 text-white">
@@ -556,7 +652,12 @@ export function ActiveWorkoutClient() {
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                deleteSet(exercise.id, set.id);
+                                setPendingDeleteSet({
+                                  exerciseId: exercise.id,
+                                  setId: set.id,
+                                  exerciseName: exercise.exerciseName,
+                                  setNumber: set.setNumber,
+                                });
                               }}
                               className="flex size-9 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
                             >

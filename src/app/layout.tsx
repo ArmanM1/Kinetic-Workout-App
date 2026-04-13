@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 
 import { AppProviders } from "@/components/providers/app-providers";
@@ -21,8 +21,27 @@ export const metadata: Metadata = {
     default: "Kinetic",
     template: "%s | Kinetic",
   },
+  applicationName: "Kinetic",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Kinetic",
+  },
   description:
     "Kinetic is a premium-feeling, mobile-first workout tracker focused on fast logging, previous-value autofill, and flexible lifter-friendly structure.",
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#020304",
 };
 
 export default function RootLayout({

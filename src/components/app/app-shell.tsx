@@ -2,11 +2,31 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronRight, Settings2, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  Check,
+  ChevronRight,
+  Expand,
+  Minimize,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { Logo } from "@/components/branding/logo";
 import { BottomNav } from "@/components/app/bottom-nav";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +40,47 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { activeSession, clearActiveSession, finishActiveSession } = useWorkoutStore();
+  const [supportsFullscreen, setSupportsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
   const isWorkoutRoute = pathname === "/app/active-workout";
   const isExerciseRoute = pathname.startsWith("/app/exercises");
   const showFloatingWorkout = Boolean(activeSession && !isWorkoutRoute);
   const workoutTitle = activeSession?.title.trim() ? activeSession.title : "Blank Workout";
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const syncFullscreenState = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+      setSupportsFullscreen(Boolean(document.fullscreenEnabled));
+    };
+
+    syncFullscreenState();
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+    };
+  }, []);
+
+  async function handleFullscreenToggle() {
+    if (typeof document === "undefined" || !document.fullscreenEnabled) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      setSupportsFullscreen(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#020304] text-white sm:p-3">
@@ -44,6 +101,14 @@ export function AppShell({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {supportsFullscreen ? (
+              <Button variant="ghost" size="icon" onClick={handleFullscreenToggle}>
+                {isFullscreen ? <Minimize className="size-4" /> : <Expand className="size-4" />}
+                <span className="sr-only">
+                  {isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                </span>
+              </Button>
+            ) : null}
             <Button asChild variant="ghost" size="icon">
               <Link href="/app/settings">
                 <Settings2 className="size-4" />
@@ -91,7 +156,7 @@ export function AppShell({
               size="icon-sm"
               variant="outline"
               className="border-white/10 bg-white/[0.03] text-zinc-300 hover:bg-white/[0.06] hover:text-white"
-              onClick={() => clearActiveSession()}
+              onClick={() => setDiscardAlertOpen(true)}
             >
               <Trash2 className="size-4" />
               <span className="sr-only">Discard workout</span>
@@ -107,6 +172,34 @@ export function AppShell({
           </div>
         </div>
       ) : null}
+
+      <AlertDialog open={discardAlertOpen} onOpenChange={setDiscardAlertOpen}>
+        <AlertDialogContent className="border border-rose-400/20 bg-zinc-950 text-white">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-rose-500/12 text-rose-300">
+              <AlertTriangle className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Discard active workout?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              This removes the live session and clears the floating return bar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="border-white/10 bg-white/[0.03]">
+            <AlertDialogCancel className="border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]">
+              Keep workout
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                clearActiveSession();
+                router.push("/app");
+              }}
+            >
+              Discard workout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
       </div>
