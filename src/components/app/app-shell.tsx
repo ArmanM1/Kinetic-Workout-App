@@ -3,9 +3,7 @@ import { Settings2 } from "lucide-react";
 
 import { Logo } from "@/components/branding/logo";
 import { BottomNav } from "@/components/app/bottom-nav";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { setupChecklist } from "@/lib/env";
 
 export function AppShell({
   children,
@@ -16,23 +14,19 @@ export function AppShell({
 }) {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(196,255,57,0.16),_transparent_32%),linear-gradient(180deg,_#090b0c_0%,_#050607_48%,_#020303_100%)] text-white">
-      <header className="sticky top-0 z-30 border-b border-white/6 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Logo />
+      <header className="sticky top-0 z-30 bg-zinc-950/70 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[27rem] items-center justify-between gap-4 px-4 pb-3 pt-5">
           <div className="flex items-center gap-3">
-            {isDemoMode ? (
-              <Badge className="border border-amber-400/20 bg-amber-400/10 text-amber-200">
-                Demo mode
-              </Badge>
-            ) : (
-              <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-200">
-                Synced
-              </Badge>
-            )}
-            <Button asChild variant="outline" size="sm">
+            <Logo showWordmark={false} />
+            <p className="text-xl font-semibold uppercase tracking-[0.18em] text-lime-300">
+              Kinetic
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon">
               <Link href="/app/settings">
                 <Settings2 className="size-4" />
-                Settings
+                <span className="sr-only">Open settings</span>
               </Link>
             </Button>
           </div>
@@ -40,29 +34,14 @@ export function AppShell({
       </header>
 
       {isDemoMode ? (
-        <div className="border-b border-white/6 bg-white/5">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-4 py-3 text-sm text-zinc-300 sm:px-6">
-            <span className="font-medium text-white">
-              Supabase auth and syncing are ready in code, but local env keys still need to be wired.
-            </span>
-            {setupChecklist
-              .filter((item) => !item.done)
-              .map((item) => (
-                <Badge
-                  key={item.label}
-                  variant="outline"
-                  className="border-white/10 bg-white/5 text-zinc-300"
-                >
-                  {item.label}
-                </Badge>
-              ))}
+        <div className="px-4 pb-2">
+          <div className="mx-auto w-full max-w-[27rem] rounded-2xl border border-amber-400/15 bg-amber-400/8 px-4 py-3 text-sm text-amber-100/90">
+            Running in demo mode until live Supabase keys are attached.
           </div>
         </div>
       ) : null}
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-28 pt-6 sm:px-6">
-        {children}
-      </main>
+      <main className="mx-auto flex w-full max-w-[27rem] flex-col px-4 pb-28 pt-2">{children}</main>
       <BottomNav />
     </div>
   );

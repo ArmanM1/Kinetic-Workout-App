@@ -38,7 +38,7 @@ export default async function SignupPage({
           <CardHeader>
             <CardTitle as="h2">Sign up</CardTitle>
             <CardDescription className="text-zinc-300">
-              Accounts are persistent and anonymous auth is disabled by design.
+              One clean signup and you are straight into the app.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

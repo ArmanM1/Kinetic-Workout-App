@@ -42,7 +42,7 @@ export function ExerciseDetail({ slug }: { slug: string }) {
           <div>
             <CardTitle className="text-3xl">{exercise.name}</CardTitle>
             <CardDescription className="mt-2 text-zinc-300">
-              {exercise.mechanic ?? "Flexible"} • {exercise.level ?? "all levels"} •{" "}
+              {exercise.mechanic ?? "Flexible"} / {exercise.level ?? "all levels"} /{" "}
               {exercise.equipment ?? "bodyweight"}
             </CardDescription>
           </div>

@@ -2,286 +2,265 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Clock3, History, PlusCircle, Sparkles } from "lucide-react";
+import { ArrowRight, FolderKanban, Play, Plus, Sparkles } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Good Morning";
+  }
+
+  if (hour < 18) {
+    return "Good Afternoon";
+  }
+
+  return "Good Evening";
+}
 
 export function HomeDashboard() {
   const router = useRouter();
   const {
     activeSession,
     defaultSplit,
-    history,
+    splits,
     settings,
-    catalog,
+    history,
+    profile,
     startBlankSession,
     startSplitDaySession,
   } = useWorkoutStore();
 
-  const favoriteExercises = catalog.filter((exercise) =>
-    settings.favoriteExerciseSlugs.includes(exercise.slug),
-  );
-
   const today = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
-    month: "long",
+    month: "short",
     day: "numeric",
   }).format(new Date());
 
+  const initials = profile.displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const routines = [...splits].sort((left, right) => {
+    if (left.isDefault === right.isDefault) {
+      return 0;
+    }
+
+    return left.isDefault ? -1 : 1;
+  });
+
+  const primaryRoutine = defaultSplit ?? routines[0] ?? null;
+  const secondaryRoutines = routines
+    .filter((split) => split.id !== primaryRoutine?.id)
+    .slice(0, 2);
+
+  const favoriteCount = settings.favoriteExerciseSlugs.length;
+  const completedCount = history.length;
+
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader className="space-y-4">
-            <Badge className="w-fit border border-lime-300/20 bg-lime-300/10 text-lime-100">
+      <section className="space-y-4 rounded-[2rem] border border-white/6 bg-white/[0.03] p-5 shadow-[0_30px_80px_-45px_rgba(0,0,0,0.9)]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-zinc-500">
               {today}
-            </Badge>
-            <div className="space-y-2">
-              <CardTitle className="text-3xl">Move fast, lift with context.</CardTitle>
-              <CardDescription className="max-w-2xl text-base text-zinc-300">
-                Blank workouts stay one tap away, previous performance remains inline, and your
-                current session can be resumed from anywhere.
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              className="bg-lime-300 text-zinc-950 hover:bg-lime-200"
-              onClick={() => {
-                startBlankSession();
-                router.push("/app/active-workout");
-              }}
-            >
-              <PlusCircle className="size-4" />
-              Start Blank Workout
-            </Button>
-            {activeSession ? (
-              <Button asChild size="lg" variant="outline">
-                <Link href="/app/active-workout">
-                  Resume Active Workout
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+            </p>
+            <h1 className="text-4xl font-semibold tracking-tight text-white">{getGreeting()}</h1>
+          </div>
+          <div className="flex size-14 items-center justify-center rounded-2xl border border-lime-300/30 bg-lime-300/10 text-lg font-semibold text-lime-200">
+            {initials || "K"}
+          </div>
+        </div>
 
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <CardTitle>Active session recovery</CardTitle>
-            <CardDescription className="text-zinc-300">
-              One active workout lives at a time, and unfinished drafts stay available if you leave
-              and come back later.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {activeSession ? (
-              <>
-                <div className="rounded-2xl border border-lime-300/20 bg-lime-300/10 p-4">
-                  <p className="text-sm uppercase tracking-[0.28em] text-lime-100/70">
-                    In progress
-                  </p>
-                  <p className="mt-2 text-xl font-semibold">{activeSession.title}</p>
-                  <p className="mt-1 text-sm text-zinc-300">
-                    {activeSession.exercises.length} movement
-                    {activeSession.exercises.length === 1 ? "" : "s"} staged
-                  </p>
-                </div>
-                <Button asChild className="w-full bg-white text-zinc-950 hover:bg-zinc-200">
-                  <Link href="/app/active-workout">Jump back in</Link>
-                </Button>
-              </>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 p-4 text-sm text-zinc-400">
-                No active workout yet. The next session you start will stay pinned here until you
-                finish it.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <button
+          type="button"
+          onClick={() => {
+            if (activeSession) {
+              router.push("/app/active-workout");
+              return;
+            }
+
+            startBlankSession();
+            router.push("/app/active-workout");
+          }}
+          className="flex w-full items-center gap-4 rounded-[1.75rem] border border-lime-300/40 bg-lime-300 px-4 py-4 text-left text-zinc-950 shadow-[0_20px_60px_-38px_rgba(196,255,57,1)] transition hover:bg-lime-200"
+        >
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-black/10">
+            {activeSession ? <Play className="size-6" /> : <Plus className="size-6" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-2xl font-semibold leading-tight">
+              {activeSession ? "Resume Workout" : "Start Empty Workout"}
+            </p>
+            <p className="mt-1 text-sm text-zinc-900/70">
+              {activeSession
+                ? activeSession.title
+                : "Jump straight into a clean logging flow."}
+            </p>
+          </div>
+          <ArrowRight className="size-5 shrink-0" />
+        </button>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/app/exercises"
+            className="rounded-[1.5rem] border border-white/8 bg-black/30 px-4 py-4 transition hover:border-lime-300/20 hover:bg-white/[0.04]"
+          >
+            <p className="text-sm font-medium text-white">Browse Exercises</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
+              Scroll, favorite, add custom
+            </p>
+          </Link>
+          <Link
+            href="/app/splits"
+            className="rounded-[1.5rem] border border-white/8 bg-black/30 px-4 py-4 transition hover:border-lime-300/20 hover:bg-white/[0.04]"
+          >
+            <p className="text-sm font-medium text-white">Open Splits</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
+              Launch routines fast
+            </p>
+          </Link>
+        </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <CardTitle>Default split</CardTitle>
-                <CardDescription className="text-zinc-300">
-                  Launch straight from your preferred split day.
-                </CardDescription>
-              </div>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/app/splits">Browse all</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {defaultSplit ? (
-              <>
-                <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold">{defaultSplit.name}</p>
-                      <p className="mt-1 text-sm text-zinc-400">
-                        {defaultSplit.description}
-                      </p>
-                    </div>
-                    <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-100">
-                      Default
-                    </Badge>
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {defaultSplit.days.map((day) => (
-                    <button
-                      key={day.id}
-                      type="button"
-                      onClick={() => {
-                        startSplitDaySession(defaultSplit.id, day.id);
-                        router.push("/app/active-workout");
-                      }}
-                      className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-left transition hover:border-lime-300/25 hover:bg-lime-300/5"
-                    >
-                      <p className="font-medium text-white">{day.name}</p>
-                      <p className="mt-1 text-sm text-zinc-400">{day.focus}</p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.28em] text-lime-200/70">
-                        {day.exercises.length} movements
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 p-4 text-sm text-zinc-400">
-                Create a split to keep a launch-ready default day on the home screen.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <h2 className="text-2xl font-semibold tracking-tight text-white">My Routines</h2>
+          <Button asChild variant="ghost" size="sm" className="text-lime-200 hover:text-lime-100">
+            <Link href="/app/splits">
+              Create New
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
 
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <CardTitle>Favorite movements</CardTitle>
-            <CardDescription className="text-zinc-300">
-              Quick access to the exercises you tap most on mobile.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {favoriteExercises.length > 0 ? (
-              favoriteExercises.slice(0, 6).map((exercise) => (
-                <Link
-                  key={exercise.slug}
-                  href={`/app/exercises/${exercise.slug}`}
-                  className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm transition hover:border-lime-300/20 hover:text-lime-100"
-                >
+        {primaryRoutine ? (
+          <Card className="border-white/8 bg-white/[0.04] text-white">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
+                    {primaryRoutine.days[0]?.focus ?? "Default split"}
+                  </p>
                   <div>
-                    <p className="font-medium text-white">{exercise.name}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.24em] text-zinc-500">
-                      {exercise.anatomyLabel}
+                    <p className="text-3xl font-semibold tracking-tight">{primaryRoutine.name}</p>
+                    <p className="mt-2 text-sm text-zinc-400">
+                      {primaryRoutine.days.length} day
+                      {primaryRoutine.days.length === 1 ? "" : "s"} ready to run
                     </p>
                   </div>
-                  <Sparkles className="size-4 text-lime-300" />
-                </Link>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 p-4 text-sm text-zinc-400">
-                Favorite an exercise from the workout builder or split browser to pin it here.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetDay = primaryRoutine.days[0];
+
+                    if (!targetDay) {
+                      router.push("/app/splits");
+                      return;
+                    }
+
+                    startSplitDaySession(primaryRoutine.id, targetDay.id);
+                    router.push("/app/active-workout");
+                  }}
+                  className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950 transition hover:bg-lime-200"
+                >
+                  <Play className="size-5 fill-current" />
+                </button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              <div className="flex flex-wrap gap-2">
+                {primaryRoutine.days.slice(0, 3).map((day) => (
+                  <button
+                    key={day.id}
+                    type="button"
+                    onClick={() => {
+                      startSplitDaySession(primaryRoutine.id, day.id);
+                      router.push("/app/active-workout");
+                    }}
+                    className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm text-zinc-300 transition hover:border-lime-300/20 hover:text-white"
+                  >
+                    {day.name}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-white/8 bg-white/[0.04] text-white">
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <p className="text-lg font-semibold">No routines yet</p>
+                <p className="mt-1 text-sm text-zinc-400">
+                  Start blank now or build a split when you want a repeatable flow.
+                </p>
+              </div>
+              <Button asChild className="bg-lime-300 text-zinc-950 hover:bg-lime-200">
+                <Link href="/app/splits">Build first routine</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {secondaryRoutines.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {secondaryRoutines.map((split) => (
+              <button
+                key={split.id}
+                type="button"
+                onClick={() => {
+                  const targetDay = split.days[0];
+
+                  if (!targetDay) {
+                    router.push("/app/splits");
+                    return;
+                  }
+
+                  startSplitDaySession(split.id, targetDay.id);
+                  router.push("/app/active-workout");
+                }}
+                className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
+              >
+                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+                  {split.days[0]?.focus ?? "Routine"}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-white">{split.name}</p>
+                <p className="mt-3 text-sm text-zinc-400">
+                  {split.days.reduce((count, day) => count + day.exercises.length, 0)} exercises
+                </p>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <CardTitle>Recent workouts</CardTitle>
-                <CardDescription className="text-zinc-300">
-                  Previous sessions stay close so the next decision is easy.
-                </CardDescription>
-              </div>
-              <History className="size-4 text-zinc-400" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {history.length > 0 ? (
-              history.slice(0, 4).map((session) => (
-                <div
-                  key={session.id}
-                  className="rounded-2xl border border-white/8 bg-black/20 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-white">{session.title}</p>
-                      <p className="mt-1 text-sm text-zinc-400">
-                        {new Intl.DateTimeFormat("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        }).format(new Date(session.finishedAt))}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="border-white/10 text-zinc-300">
-                      {session.exercises.length} exercises
-                    </Badge>
-                  </div>
-                  <Separator className="my-3 bg-white/8" />
-                  <div className="flex flex-wrap gap-2 text-xs text-zinc-400">
-                    {session.exercises.map((exercise) => (
-                      <Badge
-                        key={exercise.id}
-                        variant="outline"
-                        className="border-white/10 bg-white/5 text-zinc-300"
-                      >
-                        {exercise.exerciseName}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 p-4 text-sm text-zinc-400">
-                No data to show yet. Start a blank workout to create your first history snapshot.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <CardTitle>Rest timer defaults</CardTitle>
-            <CardDescription className="text-zinc-300">
-              The floating rest timer auto-starts every time you log a set.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-white">Default duration</p>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Adjust the timer from Settings when you want longer work sets or shorter pump
-                    work.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 rounded-full bg-lime-300/10 px-3 py-2 text-sm font-medium text-lime-100">
-                  <Clock3 className="size-4" />
-                  {Math.round(settings.restTimerSeconds / 60)} min
-                </div>
-              </div>
-            </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/app/settings">Edit timer and profile settings</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <section className="grid grid-cols-2 gap-3">
+        <Link
+          href="/app/exercises"
+          className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 transition hover:border-lime-300/20 hover:bg-white/[0.05]"
+        >
+          <Sparkles className="size-5 text-lime-300" />
+          <p className="mt-4 text-lg font-semibold text-white">Favorites</p>
+          <p className="mt-1 text-sm text-zinc-400">{favoriteCount} pinned movements</p>
+        </Link>
+        <Link
+          href={activeSession ? "/app/active-workout" : "/app/splits"}
+          className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 transition hover:border-lime-300/20 hover:bg-white/[0.05]"
+        >
+          <FolderKanban className="size-5 text-cyan-300" />
+          <p className="mt-4 text-lg font-semibold text-white">Quick Access</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {activeSession ? "Return to your live workout" : `${completedCount} sessions logged`}
+          </p>
+        </Link>
       </section>
     </div>
   );

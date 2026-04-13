@@ -2,21 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, BarChart3, Home } from "lucide-react";
+import { BarChart3, Dumbbell, FolderKanban, Home, Settings2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/app", label: "Home", icon: Home },
-  { href: "/app/active-workout", label: "Active", icon: Activity },
+  { href: "/app/exercises", label: "Exercises", icon: Dumbbell },
+  { href: "/app/splits", label: "Splits", icon: FolderKanban },
   { href: "/app/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/app/settings", label: "Settings", icon: Settings2 },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[min(26rem,calc(100%-1.5rem))] items-center justify-between rounded-full border border-white/10 bg-zinc-950/90 p-2 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.85)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[min(27rem,calc(100%-1.5rem))] items-center justify-between rounded-[1.75rem] border border-white/8 bg-black/85 p-2 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.88)] backdrop-blur">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive =
@@ -27,13 +29,13 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-3 py-3 text-sm font-medium text-zinc-400 transition",
+              "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.68rem] font-medium text-zinc-500 transition",
               isActive
-                ? "bg-lime-300 text-zinc-950 shadow-[0_12px_40px_-20px_rgba(196,255,57,1)]"
+                ? "bg-lime-300/14 text-lime-300 shadow-[0_0_28px_-18px_rgba(196,255,57,0.95)]"
                 : "hover:bg-white/5 hover:text-white",
             )}
           >
-            <Icon className="size-4" />
+            <Icon className={cn("size-4", isActive ? "text-lime-300" : "text-zinc-400")} />
             <span>{item.label}</span>
           </Link>
         );

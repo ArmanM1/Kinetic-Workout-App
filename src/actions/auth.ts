@@ -59,13 +59,20 @@ export async function signUpAction(formData: FormData) {
     withMessage("/auth/signup", "Supabase is not configured yet.");
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
 
   if (error) {
     withMessage("/auth/signup", error.message);
+  }
+
+  if (!data.session) {
+    withMessage(
+      "/auth/login",
+      "Account created. If you still see an email confirmation step, the hosted Supabase project still needs confirmations turned off.",
+    );
   }
 
   redirect("/app");
