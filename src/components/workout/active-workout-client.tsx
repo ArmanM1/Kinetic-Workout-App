@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState } from "react";
-import { FolderHeart, Heart, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { FolderHeart, Heart, Plus, Search, Sparkles, Trash2, X, Zap } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { CustomExerciseDialog } from "@/components/exercises/custom-exercise-dialog";
@@ -72,11 +72,14 @@ export function ActiveWorkoutClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [librarySection, setLibrarySection] = useState<"all" | "favorites" | "recent">("all");
+  const [librarySection, setLibrarySection] = useState<"quick" | "all" | "favorites" | "recent">(
+    "quick",
+  );
   const [finishDialogOpen, setFinishDialogOpen] = useState(false);
   const [finishNotes, setFinishNotes] = useState("");
   const [restNow, setRestNow] = useState(0);
   const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(null);
+  const [keyboardInset, setKeyboardInset] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -88,24 +91,37 @@ export function ActiveWorkoutClient() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+
+    const updateKeyboardInset = () => {
+      const nextInset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+
+      setKeyboardInset(nextInset > 120 ? nextInset : 0);
+    };
+
+    updateKeyboardInset();
+    viewport.addEventListener("resize", updateKeyboardInset);
+    viewport.addEventListener("scroll", updateKeyboardInset);
+    window.addEventListener("orientationchange", updateKeyboardInset);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardInset);
+      viewport.removeEventListener("scroll", updateKeyboardInset);
+      window.removeEventListener("orientationchange", updateKeyboardInset);
+    };
+  }, []);
+
   const visibleCatalog = catalog.filter(
     (exercise) => !settings.archivedExerciseSlugs.includes(exercise.slug),
   );
-  const filteredExercises = searchExercises(visibleCatalog, deferredQuery, {
-    source: "all",
-  })
-    .filter((exercise) => {
-      if (librarySection === "favorites") {
-        return settings.favoriteExerciseSlugs.includes(exercise.slug);
-      }
-
-      if (librarySection === "recent") {
-        return recentExerciseSlugs.includes(exercise.slug);
-      }
-
-      return true;
-    })
-    .slice(0, 16);
   const catalogBySlug = new Map(catalog.map((exercise) => [exercise.slug, exercise]));
   const quickExercises = Array.from(
     new Set([
@@ -116,12 +132,45 @@ export function ActiveWorkoutClient() {
     .map((slug) => visibleCatalog.find((exercise) => exercise.slug === slug) ?? null)
     .filter((exercise): exercise is ExerciseCatalogItem => exercise !== null)
     .slice(0, 8);
+  const activeLibrarySection =
+    librarySection === "quick" && quickExercises.length === 0 ? "all" : librarySection;
+  const librarySource =
+    activeLibrarySection === "quick"
+      ? quickExercises
+      : visibleCatalog.filter((exercise) => {
+          if (activeLibrarySection === "favorites") {
+            return settings.favoriteExerciseSlugs.includes(exercise.slug);
+          }
+
+          if (activeLibrarySection === "recent") {
+            return recentExerciseSlugs.includes(exercise.slug);
+          }
+
+          return true;
+        });
+  const filteredExercises = searchExercises(librarySource, deferredQuery, {
+    source: "all",
+  }).slice(0, 24);
+  const isKeyboardOpen = keyboardInset > 0;
+  const workoutBottomPadding = isKeyboardOpen ? keyboardInset + 176 : 176;
+  const actionBarBottom = isKeyboardOpen ? keyboardInset + 12 : 96;
+  const restTimerBottom = isKeyboardOpen ? keyboardInset + 88 : 160;
 
   function handleAddExercise(exerciseSlug: string) {
     addExercise(exerciseSlug);
     setSearchQuery("");
-    setLibrarySection("all");
+    setLibrarySection("quick");
     setLibraryOpen(false);
+  }
+
+  function focusSet(exerciseId: string, setId: string) {
+    selectSet(exerciseId, setId);
+
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(`[data-set-id="${setId}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
   }
 
   if (!activeSession) {
@@ -175,7 +224,7 @@ export function ActiveWorkoutClient() {
 
   return (
     <>
-      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen}>
+      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen} fixed repositionInputs>
         <DrawerContent className="border-white/10 bg-zinc-950 text-white">
           <DrawerHeader className="px-5 pb-2 pt-5 text-left">
             <div className="flex items-center justify-between gap-3">
@@ -209,8 +258,9 @@ export function ActiveWorkoutClient() {
                 placeholder="Search exercises..."
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[
+                { id: "quick" as const, label: "Quick", icon: Zap },
                 { id: "all" as const, label: "All", icon: Search },
                 { id: "favorites" as const, label: "Favorites", icon: FolderHeart },
                 { id: "recent" as const, label: "Recent", icon: Sparkles },
@@ -223,8 +273,8 @@ export function ActiveWorkoutClient() {
                     type="button"
                     onClick={() => setLibrarySection(item.id)}
                     className={cn(
-                      "lift-tap flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] transition",
-                      librarySection === item.id
+                      "lift-tap flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] transition",
+                      activeLibrarySection === item.id
                         ? "border-lime-300/30 bg-lime-300/10 text-lime-200"
                         : "border-white/8 bg-white/[0.02] text-zinc-500 hover:text-white",
                     )}
@@ -235,26 +285,7 @@ export function ActiveWorkoutClient() {
                 );
               })}
             </div>
-            {searchQuery.trim() === "" && quickExercises.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
-                  Quick add
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {quickExercises.map((exercise) => (
-                    <button
-                      key={exercise.slug}
-                      type="button"
-                      onClick={() => handleAddExercise(exercise.slug)}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white transition hover:border-lime-300/30 hover:bg-lime-300/10"
-                    >
-                      {exercise.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            <div className="no-scrollbar max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+            <div className="no-scrollbar max-h-[min(56vh,calc(100dvh-16rem))] space-y-2 overflow-y-auto pr-1 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
               {filteredExercises.map((exercise) => (
                 <button
                   key={exercise.slug}
@@ -273,6 +304,14 @@ export function ActiveWorkoutClient() {
                   </div>
                 </button>
               ))}
+              {filteredExercises.length === 0 ? (
+                <div className="rounded-[1.4rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-white">Nothing here yet</p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Try another section or create a custom exercise.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </DrawerContent>
@@ -322,7 +361,7 @@ export function ActiveWorkoutClient() {
         </DialogContent>
       </Dialog>
 
-      <div className="ios-page space-y-4 pb-44">
+      <div className="ios-page space-y-4" style={{ paddingBottom: `${workoutBottomPadding}px` }}>
         <section className="ios-card space-y-4 rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 text-white">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -479,6 +518,7 @@ export function ActiveWorkoutClient() {
                       return (
                         <div
                           key={set.id}
+                          data-set-id={set.id}
                           className={cn(
                             "mx-3 mb-3 rounded-[1.35rem] border px-3 py-3 transition",
                             isActive &&
@@ -486,22 +526,22 @@ export function ActiveWorkoutClient() {
                             isLogged && !isActive && "border-white/6 bg-white/[0.03]",
                             !isActive && !isLogged && "border-transparent bg-black/20",
                           )}
-                          onClick={() => selectSet(exercise.id, set.id)}
+                          onClick={() => focusSet(exercise.id, set.id)}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                               <button
-                                type="button"
-                                className={cn(
-                                  "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
-                                  isActive
-                                    ? "bg-lime-300 text-zinc-950"
-                                    : "bg-white/[0.06] text-white",
-                                )}
-                                onClick={() => selectSet(exercise.id, set.id)}
-                              >
-                                {setIndex + 1}
-                              </button>
+                              type="button"
+                              className={cn(
+                                "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
+                                isActive
+                                  ? "bg-lime-300 text-zinc-950"
+                                  : "bg-white/[0.06] text-white",
+                              )}
+                              onClick={() => focusSet(exercise.id, set.id)}
+                            >
+                              {setIndex + 1}
+                            </button>
                               {set.previousWeight != null || set.previousReps != null ? (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
                                   {set.previousWeight ?? "-"} {profile.weightUnit} x {set.previousReps ?? "-"}
@@ -528,7 +568,7 @@ export function ActiveWorkoutClient() {
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <Input
                               value={loadValue}
-                              onFocus={() => selectSet(exercise.id, set.id)}
+                              onFocus={() => focusSet(exercise.id, set.id)}
                               onChange={(event) =>
                                 updateDraft(exercise.id, set.id, {
                                   [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
@@ -545,7 +585,7 @@ export function ActiveWorkoutClient() {
                             />
                             <Input
                               value={set.draftReps ?? ""}
-                              onFocus={() => selectSet(exercise.id, set.id)}
+                              onFocus={() => focusSet(exercise.id, set.id)}
                               onChange={(event) =>
                                 updateDraft(exercise.id, set.id, {
                                   draftReps: parseNumericInput(event.target.value),
@@ -594,8 +634,11 @@ export function ActiveWorkoutClient() {
         )}
       </div>
 
-      {isRestTimerVisible ? (
-        <div className="fixed inset-x-0 bottom-40 z-30 mx-auto flex w-[min(25rem,calc(100%-1.5rem))] justify-end px-1">
+      {isRestTimerVisible && !isKeyboardOpen ? (
+        <div
+          className="fixed inset-x-0 z-30 mx-auto flex w-[min(25rem,calc(100%-1.5rem))] justify-end px-1"
+          style={{ bottom: `${restTimerBottom}px` }}
+        >
           <div className="flex items-center gap-3 rounded-[1.4rem] border border-lime-300/20 bg-zinc-950/95 px-4 py-3 text-white shadow-[0_20px_50px_-35px_rgba(0,0,0,0.95)] backdrop-blur">
             <div>
               <p className="text-[0.65rem] uppercase tracking-[0.24em] text-lime-200/70">Rest</p>
@@ -613,7 +656,10 @@ export function ActiveWorkoutClient() {
         </div>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-24 z-30 mx-auto w-[min(25rem,calc(100%-1.5rem))] px-1">
+      <div
+        className="fixed inset-x-0 z-30 mx-auto w-[min(25rem,calc(100%-1.5rem))] px-1"
+        style={{ bottom: `${actionBarBottom}px` }}
+      >
         <div className="flex items-center gap-3">
           <Button
             size="icon-lg"
