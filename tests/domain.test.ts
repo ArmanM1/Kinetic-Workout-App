@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildBodyRegionAnalytics,
   buildDashboardStats,
+  buildLoggedExerciseOptions,
   calculateCurrentAndLongestStreak,
   calculateExerciseEstimatedOneRepMax,
   estimateOneRepMax,
@@ -114,4 +116,26 @@ test("exercise estimated 1RM uses the best logged set", () => {
   );
 
   assert.equal(estimated, 252);
+});
+
+test("body region analytics summarize volume and ranked lifts", () => {
+  const state = createInitialStoreState();
+  const analytics = buildBodyRegionAnalytics(
+    state.history,
+    state.profile,
+    [...builtInExercises, ...state.customExercises],
+  );
+  const chest = analytics.details.find((detail) => detail.id === "chest");
+
+  assert.ok(chest);
+  assert.ok(chest.totalVolume > 0);
+  assert.equal(chest.lifts[0]?.name, "Barbell Bench Press - Medium Grip");
+});
+
+test("logged exercise options expose all tracked exercises", () => {
+  const state = createInitialStoreState();
+  const options = buildLoggedExerciseOptions(state.history);
+
+  assert.ok(options.length >= 3);
+  assert.ok(options.some((option) => option.name === "Barbell Squat"));
 });

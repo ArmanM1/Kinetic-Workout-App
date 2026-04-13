@@ -17,6 +17,7 @@
 - Tightened the home and workout screens again by stripping helper copy, turning add-exercise into a mobile drawer with quick-add shortcuts, and making the entire active set read as one highlighted tile
 - Added inline blank-workout renaming, per-exercise muscle tags plus live estimated 1RM chips, a route-aware clean background for the exercises library, and a floating cross-app return bar for active workouts
 - Added a shared custom-exercise dialog, favorite/recent collection entry points in the library and workout drawer, and a more native mobile shell with soft page/card animations
+- Rebuilt analytics into mobile-friendly Overview and Body tabs with a selectable E1RM chart, clickable body-part drilldowns, balance scoring, per-region progress, and ranked lift lists
 - Connected Codex to the Supabase MCP server and verified that the remaining hosted auth blocker is the standalone Supabase CLI token step
 - Updated signup to surface a clear message when hosted Supabase still requires email confirmation
 - Verified `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`
