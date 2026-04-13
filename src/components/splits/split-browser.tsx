@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowRight, PlusCircle } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toSplitSlug } from "@/lib/splits";
 
 export function SplitBrowser() {
-  const router = useRouter();
-  const { createSplit, splits, startSplitDaySession } = useWorkoutStore();
+  const { createSplit, splits } = useWorkoutStore();
   const [name, setName] = useState("");
   const [focus, setFocus] = useState("");
 
@@ -69,7 +69,7 @@ export function SplitBrowser() {
       <div className="grid gap-4 xl:grid-cols-2">
         {splits.map((split) => (
           <Card key={split.id} className="border-white/10 bg-white/5 text-white">
-            <CardHeader>
+            <CardHeader className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <CardTitle>{split.name}</CardTitle>
@@ -84,40 +84,23 @@ export function SplitBrowser() {
                 ) : null}
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {split.days.map((day) => (
-                <div
-                  key={day.id}
-                  className="rounded-2xl border border-white/8 bg-black/20 p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-white">{day.name}</p>
-                      <p className="mt-1 text-sm text-zinc-400">{day.focus}</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {day.exercises.map((exercise) => (
-                          <Badge
-                            key={exercise.id}
-                            variant="outline"
-                            className="border-white/10 bg-white/5 text-zinc-300"
-                          >
-                            {exercise.setCount}x {exercise.exerciseSlug.replace(/-/g, " ")}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        startSplitDaySession(split.id, day.id);
-                        router.push("/app/active-workout");
-                      }}
-                    >
-                      Start
-                      <ArrowRight className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {split.days.map((day) => (
+                  <span
+                    key={day.id}
+                    className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm text-zinc-300"
+                  >
+                    {day.name}
+                  </span>
+                ))}
+              </div>
+              <Button asChild className="w-full bg-lime-300 text-zinc-950 hover:bg-lime-200">
+                <Link href={`/app/splits/${toSplitSlug(split.name)}`}>
+                  Open Split
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         ))}

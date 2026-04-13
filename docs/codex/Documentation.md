@@ -12,6 +12,8 @@
 - Fixed the Vercel framework configuration so production serves the Next.js app correctly
 - Redesigned the authenticated app shell and home screen into a tighter mobile-first flow with fewer explanatory panels
 - Added the dedicated exercises browser route with search, muscle chips, sort modes, favorites, and custom exercise creation
+- Refined split launching so routine cards open into per-split day launch pages and replacing a live workout now requires an explicit discard-or-end confirmation
+- Rebuilt the active workout screen into a denser activity-style layout with a floating dismissible rest timer and a fixed bottom `Log Set` action
 - Connected Codex to the Supabase MCP server and verified that the remaining hosted auth blocker is the standalone Supabase CLI token step
 - Updated signup to surface a clear message when hosted Supabase still requires email confirmation
 - Verified `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`

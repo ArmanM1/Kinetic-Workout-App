@@ -7,6 +7,7 @@ import { ArrowRight, FolderKanban, Play, Plus, Sparkles } from "lucide-react";
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { toSplitSlug } from "@/lib/splits";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -32,7 +33,6 @@ export function HomeDashboard() {
     history,
     profile,
     startBlankSession,
-    startSplitDaySession,
   } = useWorkoutStore();
 
   const today = new Intl.DateTimeFormat("en-US", {
@@ -64,6 +64,7 @@ export function HomeDashboard() {
 
   const favoriteCount = settings.favoriteExerciseSlugs.length;
   const completedCount = history.length;
+  const primaryRoutineHref = primaryRoutine ? `/app/splits/${toSplitSlug(primaryRoutine.name)}` : "/app/splits";
 
   return (
     <div className="space-y-6">
@@ -145,51 +146,32 @@ export function HomeDashboard() {
         {primaryRoutine ? (
           <Card className="border-white/8 bg-white/[0.04] text-white">
             <CardContent className="space-y-4 p-5">
-              <div className="flex items-start justify-between gap-4">
+              <Link href={primaryRoutineHref} className="block">
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
                     {primaryRoutine.days[0]?.focus ?? "Default split"}
                   </p>
-                  <div>
-                    <p className="text-3xl font-semibold tracking-tight">{primaryRoutine.name}</p>
-                    <p className="mt-2 text-sm text-zinc-400">
-                      {primaryRoutine.days.length} day
-                      {primaryRoutine.days.length === 1 ? "" : "s"} ready to run
-                    </p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-3xl font-semibold tracking-tight">{primaryRoutine.name}</p>
+                      <p className="mt-2 text-sm text-zinc-400">
+                        {primaryRoutine.days.length} day
+                        {primaryRoutine.days.length === 1 ? "" : "s"} ready to run
+                      </p>
+                    </div>
+                    <ArrowRight className="mt-1 size-5 shrink-0 text-lime-200" />
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const targetDay = primaryRoutine.days[0];
-
-                    if (!targetDay) {
-                      router.push("/app/splits");
-                      return;
-                    }
-
-                    startSplitDaySession(primaryRoutine.id, targetDay.id);
-                    router.push("/app/active-workout");
-                  }}
-                  className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950 transition hover:bg-lime-200"
-                >
-                  <Play className="size-5 fill-current" />
-                </button>
-              </div>
-
+              </Link>
               <div className="flex flex-wrap gap-2">
                 {primaryRoutine.days.slice(0, 3).map((day) => (
-                  <button
+                  <Link
                     key={day.id}
-                    type="button"
-                    onClick={() => {
-                      startSplitDaySession(primaryRoutine.id, day.id);
-                      router.push("/app/active-workout");
-                    }}
+                    href={primaryRoutineHref}
                     className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm text-zinc-300 transition hover:border-lime-300/20 hover:text-white"
                   >
                     {day.name}
-                  </button>
+                  </Link>
                 ))}
               </div>
             </CardContent>
@@ -213,20 +195,9 @@ export function HomeDashboard() {
         {secondaryRoutines.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {secondaryRoutines.map((split) => (
-              <button
+              <Link
                 key={split.id}
-                type="button"
-                onClick={() => {
-                  const targetDay = split.days[0];
-
-                  if (!targetDay) {
-                    router.push("/app/splits");
-                    return;
-                  }
-
-                  startSplitDaySession(split.id, targetDay.id);
-                  router.push("/app/active-workout");
-                }}
+                href={`/app/splits/${toSplitSlug(split.name)}`}
                 className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
               >
                 <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
@@ -236,7 +207,7 @@ export function HomeDashboard() {
                 <p className="mt-3 text-sm text-zinc-400">
                   {split.days.reduce((count, day) => count + day.exercises.length, 0)} exercises
                 </p>
-              </button>
+              </Link>
             ))}
           </div>
         ) : null}

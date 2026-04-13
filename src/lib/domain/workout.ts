@@ -142,7 +142,9 @@ function resolveExerciseOrder(session: ActiveWorkoutSession) {
   };
 }
 
-export function startBlankWorkout(settings: UserSettings) {
+export function startBlankWorkout(_settings: UserSettings) {
+  void _settings;
+
   return {
     id: createId("session"),
     title: "Blank Workout",
@@ -154,9 +156,7 @@ export function startBlankWorkout(settings: UserSettings) {
     exercises: [],
     activeExerciseId: null,
     activeSetId: null,
-    restTimerEndsAt: settings.restTimerEnabled
-      ? new Date(Date.now() + settings.restTimerSeconds * 1000).toISOString()
-      : null,
+    restTimerEndsAt: null,
   };
 }
 
@@ -164,9 +164,11 @@ export function startWorkoutFromSplitDay(
   day: SplitDay,
   catalog: ExerciseCatalogItem[],
   history: CompletedWorkoutSession[],
-  settings: UserSettings,
+  _settings: UserSettings,
   splitId: string,
 ) {
+  void _settings;
+
   const exercises = day.exercises
     .map((plan) => {
       const exercise = catalog.find((entry) => entry.slug === plan.exerciseSlug);
@@ -197,9 +199,7 @@ export function startWorkoutFromSplitDay(
       exercises,
       activeExerciseId: exercises[0]?.id ?? null,
       activeSetId: exercises[0]?.sets[0]?.id ?? null,
-      restTimerEndsAt: settings.restTimerEnabled
-        ? new Date(Date.now() + settings.restTimerSeconds * 1000).toISOString()
-        : null,
+      restTimerEndsAt: null,
     }),
   );
 }
