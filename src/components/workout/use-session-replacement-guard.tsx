@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -64,10 +63,7 @@ export function useSessionReplacementGuard() {
         <DialogContent className="border border-white/10 bg-zinc-950 text-white">
           <DialogHeader>
             <DialogTitle>End current workout?</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Starting {pendingLabel} will replace your live session. You can discard it or finish
-              it first with completed sets only.
-            </DialogDescription>
+            <p className="text-sm text-zinc-400">Starting {pendingLabel} replaces your live session.</p>
           </DialogHeader>
           <div className="grid gap-2 sm:grid-cols-3">
             <Button variant="outline" onClick={() => setOpen(false)}>

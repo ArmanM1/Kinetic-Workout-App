@@ -12,13 +12,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { searchExercises } from "@/lib/data/catalog";
+import type { ExerciseCatalogItem } from "@/types/kinetic";
 import { cn } from "@/lib/utils";
 
 function parseNumericInput(value: string) {
@@ -47,6 +53,7 @@ export function ActiveWorkoutClient() {
     catalog,
     history,
     profile,
+    recentExerciseSlugs,
     settings,
     addExercise,
     addSet,
@@ -77,13 +84,27 @@ export function ActiveWorkoutClient() {
     };
   }, []);
 
-  const filteredExercises = searchExercises(
-    catalog.filter((exercise) => !settings.archivedExerciseSlugs.includes(exercise.slug)),
-    deferredQuery,
-    {
-      source: "all",
-    },
-  ).slice(0, 12);
+  const visibleCatalog = catalog.filter(
+    (exercise) => !settings.archivedExerciseSlugs.includes(exercise.slug),
+  );
+  const filteredExercises = searchExercises(visibleCatalog, deferredQuery, {
+    source: "all",
+  }).slice(0, 12);
+  const quickExercises = Array.from(
+    new Set([
+      ...settings.favoriteExerciseSlugs,
+      ...recentExerciseSlugs,
+    ]),
+  )
+    .map((slug) => visibleCatalog.find((exercise) => exercise.slug === slug) ?? null)
+    .filter((exercise): exercise is ExerciseCatalogItem => exercise !== null)
+    .slice(0, 8);
+
+  function handleAddExercise(exerciseSlug: string) {
+    addExercise(exerciseSlug);
+    setSearchQuery("");
+    setLibraryOpen(false);
+  }
 
   if (!activeSession) {
     return (
@@ -92,9 +113,6 @@ export function ActiveWorkoutClient() {
           <CardContent className="space-y-4 p-5">
             <div>
               <p className="text-3xl font-semibold tracking-tight">No workout live</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                Start empty or launch from one of your splits.
-              </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -138,15 +156,12 @@ export function ActiveWorkoutClient() {
 
   return (
     <>
-      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
-        <DialogContent className="border border-white/10 bg-zinc-950 text-white">
-          <DialogHeader>
-            <DialogTitle>Add movement</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Search built-in and custom exercises.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
+      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen}>
+        <DrawerContent className="border-white/10 bg-zinc-950 text-white">
+          <DrawerHeader className="px-5 pb-2 pt-5 text-left">
+            <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-4 px-5 pb-5">
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
@@ -156,41 +171,53 @@ export function ActiveWorkoutClient() {
                 placeholder="Search exercises..."
               />
             </div>
+            {searchQuery.trim() === "" && quickExercises.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
+                  Quick add
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quickExercises.map((exercise) => (
+                    <button
+                      key={exercise.slug}
+                      type="button"
+                      onClick={() => handleAddExercise(exercise.slug)}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white transition hover:border-lime-300/30 hover:bg-lime-300/10"
+                    >
+                      {exercise.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="no-scrollbar max-h-[55vh] space-y-2 overflow-y-auto pr-1">
               {filteredExercises.map((exercise) => (
                 <button
                   key={exercise.slug}
                   type="button"
-                  onClick={() => {
-                    addExercise(exercise.slug);
-                    setSearchQuery("");
-                    setLibraryOpen(false);
-                  }}
+                  onClick={() => handleAddExercise(exercise.slug)}
                   className="flex w-full items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-base font-medium text-white">{exercise.name}</p>
                     <p className="mt-1 truncate text-sm text-zinc-400">
-                      {exercise.anatomyLabel} / {exercise.equipment ?? "Bodyweight"}
+                      {exercise.anatomyLabel} · {exercise.equipment ?? "Bodyweight"}
                     </p>
                   </div>
-                  <Badge variant="outline" className="border-white/10 text-zinc-300">
-                    {exercise.source}
-                  </Badge>
+                  <div className="flex size-10 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950">
+                    <Plus className="size-4" />
+                  </div>
                 </button>
               ))}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog open={finishDialogOpen} onOpenChange={setFinishDialogOpen}>
         <DialogContent className="border border-white/10 bg-zinc-950 text-white">
           <DialogHeader>
             <DialogTitle>End workout?</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Finish saves completed sets only. Discard clears the session.
-            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <Textarea
@@ -240,7 +267,6 @@ export function ActiveWorkoutClient() {
               </Badge>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">{activeSession.title}</h1>
               <p className="mt-2 text-sm text-zinc-500">
-                Started{" "}
                 {new Intl.DateTimeFormat("en-US", {
                   hour: "numeric",
                   minute: "2-digit",
@@ -253,23 +279,15 @@ export function ActiveWorkoutClient() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="rounded-full border-white/10 bg-black/20 text-white hover:bg-white/[0.06]"
-              onClick={() => setLibraryOpen(true)}
-            >
-              <Search className="size-4" />
-              Add Movement
-            </Button>
             {activeExercise && activeSet ? (
               <div className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.22em] text-zinc-400">
-                Active {activeExercise.exerciseName} / Set {activeSet.setNumber}
+                {activeExercise.exerciseName} / Set {activeSet.setNumber}
               </div>
             ) : null}
             {profile.bodyWeight == null &&
             activeSession.exercises.some((exercise) => exercise.tag === "assisted") ? (
               <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs uppercase tracking-[0.22em] text-amber-100">
-                Add body weight for assisted load
+                Set body weight
               </div>
             ) : null}
           </div>
@@ -278,18 +296,13 @@ export function ActiveWorkoutClient() {
         {activeSession.exercises.length === 0 ? (
           <Card className="border-dashed border-white/12 bg-white/[0.03] text-white">
             <CardContent className="space-y-4 p-5">
-              <div>
-                <p className="text-2xl font-semibold">Add your first movement</p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  New exercises start with three draft sets.
-                </p>
-              </div>
+              <p className="text-2xl font-semibold">Add your first exercise</p>
               <Button
                 className="bg-lime-300 text-zinc-950 hover:bg-lime-200"
                 onClick={() => setLibraryOpen(true)}
               >
                 <Plus className="size-4" />
-                Add First Movement
+                Add Exercise
               </Button>
             </CardContent>
           </Card>
@@ -318,12 +331,9 @@ export function ActiveWorkoutClient() {
                               {exercise.tag.replace("_", " ")}
                             </Badge>
                           </div>
-                          {exercise.notes ? (
-                            <p className="mt-2 text-sm text-zinc-400">{exercise.notes}</p>
-                          ) : null}
                           {previousSession ? (
                             <p className="mt-2 text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">
-                              Last used in {previousSession.title}
+                              {previousSession.title}
                             </p>
                           ) : null}
                         </div>
@@ -366,58 +376,86 @@ export function ActiveWorkoutClient() {
                         <div
                           key={set.id}
                           className={cn(
-                            "grid grid-cols-[3rem_1fr_1fr_auto] items-center gap-2 border-b border-white/6 px-4 py-3 transition",
-                            isActive && "bg-lime-300/10",
-                            isLogged && "bg-white/[0.03]",
+                            "mx-3 mb-3 rounded-[1.35rem] border px-3 py-3 transition",
+                            isActive &&
+                              "border-lime-300/50 bg-lime-300/12 shadow-[0_18px_50px_-38px_rgba(196,255,57,1)]",
+                            isLogged && !isActive && "border-white/6 bg-white/[0.03]",
+                            !isActive && !isLogged && "border-transparent bg-black/20",
                           )}
                           onClick={() => selectSet(exercise.id, set.id)}
                         >
-                          <button
-                            type="button"
-                            className={cn(
-                              "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
-                              isActive
-                                ? "bg-lime-300 text-zinc-950"
-                                : "bg-black/20 text-white",
-                            )}
-                            onClick={() => selectSet(exercise.id, set.id)}
-                          >
-                            {setIndex + 1}
-                          </button>
-                          <Input
-                            value={loadValue}
-                            onFocus={() => selectSet(exercise.id, set.id)}
-                            onChange={(event) =>
-                              updateDraft(exercise.id, set.id, {
-                                [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
-                                  parseNumericInput(event.target.value),
-                              })
-                            }
-                            className="h-10 rounded-xl border-0 bg-transparent px-0 text-center text-base font-medium text-white shadow-none ring-0 focus-visible:ring-0"
-                            placeholder="-"
-                          />
-                          <Input
-                            value={set.draftReps ?? ""}
-                            onFocus={() => selectSet(exercise.id, set.id)}
-                            onChange={(event) =>
-                              updateDraft(exercise.id, set.id, {
-                                draftReps: parseNumericInput(event.target.value),
-                              })
-                            }
-                            className="h-10 rounded-xl border-0 bg-transparent px-0 text-center text-base font-medium text-white shadow-none ring-0 focus-visible:ring-0"
-                            placeholder="-"
-                          />
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              deleteSet(exercise.id, set.id);
-                            }}
-                            className="flex size-9 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
-                          >
-                            <Trash2 className="size-4" />
-                            <span className="sr-only">Delete set</span>
-                          </button>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                className={cn(
+                                  "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
+                                  isActive
+                                    ? "bg-lime-300 text-zinc-950"
+                                    : "bg-white/[0.06] text-white",
+                                )}
+                                onClick={() => selectSet(exercise.id, set.id)}
+                              >
+                                {setIndex + 1}
+                              </button>
+                              {set.previousWeight != null || set.previousReps != null ? (
+                                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
+                                  {set.previousWeight ?? "-"} {profile.weightUnit} × {set.previousReps ?? "-"}
+                                </p>
+                              ) : (
+                                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-600">
+                                  New
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteSet(exercise.id, set.id);
+                              }}
+                              className="flex size-9 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
+                            >
+                              <Trash2 className="size-4" />
+                              <span className="sr-only">Delete set</span>
+                            </button>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <Input
+                              value={loadValue}
+                              onFocus={() => selectSet(exercise.id, set.id)}
+                              onChange={(event) =>
+                                updateDraft(exercise.id, set.id, {
+                                  [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
+                                    parseNumericInput(event.target.value),
+                                })
+                              }
+                              className={cn(
+                                "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
+                                isActive
+                                  ? "border-lime-300/40 bg-lime-300/10"
+                                  : "border-white/10 bg-black/20",
+                              )}
+                              placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
+                            />
+                            <Input
+                              value={set.draftReps ?? ""}
+                              onFocus={() => selectSet(exercise.id, set.id)}
+                              onChange={(event) =>
+                                updateDraft(exercise.id, set.id, {
+                                  draftReps: parseNumericInput(event.target.value),
+                                })
+                              }
+                              className={cn(
+                                "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
+                                isActive
+                                  ? "border-lime-300/40 bg-lime-300/10"
+                                  : "border-white/10 bg-black/20",
+                              )}
+                              placeholder="Reps"
+                            />
+                          </div>
                         </div>
                       );
                     })}
@@ -425,7 +463,7 @@ export function ActiveWorkoutClient() {
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                       <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
                         {activeSession.activeExerciseId === exercise.id && activeSet
-                          ? `Prev ${activeSet.previousWeight ?? "-"} ${profile.weightUnit} x ${activeSet.previousReps ?? "-"}`
+                          ? `${activeSet.previousWeight ?? "-"} ${profile.weightUnit} × ${activeSet.previousReps ?? "-"}`
                           : `${exercise.sets.length} sets`}
                       </p>
                       <button
@@ -446,7 +484,7 @@ export function ActiveWorkoutClient() {
               onClick={() => setLibraryOpen(true)}
               className="w-full rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-4 text-center text-sm font-medium text-zinc-400 transition hover:border-lime-300/20 hover:text-white"
             >
-              + Add exercise
+              + Add another exercise
             </button>
           </div>
         )}
@@ -472,14 +510,25 @@ export function ActiveWorkoutClient() {
       ) : null}
 
       <div className="fixed inset-x-0 bottom-24 z-30 mx-auto w-[min(25rem,calc(100%-1.5rem))] px-1">
-        <Button
-          size="lg"
-          className="h-14 w-full rounded-2xl bg-lime-300 text-base font-semibold text-zinc-950 shadow-[0_24px_70px_-40px_rgba(196,255,57,1)] hover:bg-lime-200 disabled:bg-zinc-800 disabled:text-zinc-500"
-          disabled={!activeSetHasValues}
-          onClick={() => logFocusedSet()}
-        >
-          Log Set
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            size="icon-lg"
+            variant="outline"
+            className="size-14 rounded-2xl border-white/10 bg-zinc-950/95 text-white shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] hover:bg-white/[0.06]"
+            onClick={() => setLibraryOpen(true)}
+          >
+            <Plus className="size-5" />
+            <span className="sr-only">Add exercise</span>
+          </Button>
+          <Button
+            size="lg"
+            className="h-14 flex-1 rounded-2xl bg-lime-300 text-base font-semibold text-zinc-950 shadow-[0_24px_70px_-40px_rgba(196,255,57,1)] hover:bg-lime-200 disabled:bg-zinc-800 disabled:text-zinc-500"
+            disabled={!activeSetHasValues}
+            onClick={() => logFocusedSet()}
+          >
+            Log Set
+          </Button>
+        </div>
       </div>
     </>
   );

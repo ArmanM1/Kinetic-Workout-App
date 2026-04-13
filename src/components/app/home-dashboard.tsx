@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, FolderKanban, Play, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Play, Plus } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,6 @@ export function HomeDashboard() {
     activeSession,
     defaultSplit,
     splits,
-    settings,
-    history,
     profile,
     startBlankSession,
   } = useWorkoutStore();
@@ -62,8 +60,6 @@ export function HomeDashboard() {
     .filter((split) => split.id !== primaryRoutine?.id)
     .slice(0, 2);
 
-  const favoriteCount = settings.favoriteExerciseSlugs.length;
-  const completedCount = history.length;
   const primaryRoutineHref = primaryRoutine ? `/app/splits/${toSplitSlug(primaryRoutine.name)}` : "/app/splits";
 
   return (
@@ -101,11 +97,9 @@ export function HomeDashboard() {
             <p className="text-2xl font-semibold leading-tight">
               {activeSession ? "Resume Workout" : "Start Empty Workout"}
             </p>
-            <p className="mt-1 text-sm text-zinc-900/70">
-              {activeSession
-                ? activeSession.title
-                : "Jump straight into a clean logging flow."}
-            </p>
+            {activeSession ? (
+              <p className="mt-1 text-sm text-zinc-900/70">{activeSession.title}</p>
+            ) : null}
           </div>
           <ArrowRight className="size-5 shrink-0" />
         </button>
@@ -116,18 +110,14 @@ export function HomeDashboard() {
             className="rounded-[1.5rem] border border-white/8 bg-black/30 px-4 py-4 transition hover:border-lime-300/20 hover:bg-white/[0.04]"
           >
             <p className="text-sm font-medium text-white">Browse Exercises</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
-              Scroll, favorite, add custom
-            </p>
+            <p className="mt-2 text-xs uppercase tracking-[0.22em] text-zinc-500">Library</p>
           </Link>
           <Link
             href="/app/splits"
             className="rounded-[1.5rem] border border-white/8 bg-black/30 px-4 py-4 transition hover:border-lime-300/20 hover:bg-white/[0.04]"
           >
             <p className="text-sm font-medium text-white">Open Splits</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
-              Launch routines fast
-            </p>
+            <p className="mt-2 text-xs uppercase tracking-[0.22em] text-zinc-500">Routines</p>
           </Link>
         </div>
       </section>
@@ -156,7 +146,7 @@ export function HomeDashboard() {
                       <p className="text-3xl font-semibold tracking-tight">{primaryRoutine.name}</p>
                       <p className="mt-2 text-sm text-zinc-400">
                         {primaryRoutine.days.length} day
-                        {primaryRoutine.days.length === 1 ? "" : "s"} ready to run
+                        {primaryRoutine.days.length === 1 ? "" : "s"}
                       </p>
                     </div>
                     <ArrowRight className="mt-1 size-5 shrink-0 text-lime-200" />
@@ -179,12 +169,7 @@ export function HomeDashboard() {
         ) : (
           <Card className="border-white/8 bg-white/[0.04] text-white">
             <CardContent className="space-y-4 p-5">
-              <div>
-                <p className="text-lg font-semibold">No routines yet</p>
-                <p className="mt-1 text-sm text-zinc-400">
-                  Start blank now or build a split when you want a repeatable flow.
-                </p>
-              </div>
+              <p className="text-lg font-semibold">No routines yet</p>
               <Button asChild className="bg-lime-300 text-zinc-950 hover:bg-lime-200">
                 <Link href="/app/splits">Build first routine</Link>
               </Button>
@@ -204,34 +189,11 @@ export function HomeDashboard() {
                   {split.days[0]?.focus ?? "Routine"}
                 </p>
                 <p className="mt-2 text-xl font-semibold text-white">{split.name}</p>
-                <p className="mt-3 text-sm text-zinc-400">
-                  {split.days.reduce((count, day) => count + day.exercises.length, 0)} exercises
-                </p>
+                <p className="mt-3 text-sm text-zinc-400">{split.days.length} day{split.days.length === 1 ? "" : "s"}</p>
               </Link>
             ))}
           </div>
         ) : null}
-      </section>
-
-      <section className="grid grid-cols-2 gap-3">
-        <Link
-          href="/app/exercises"
-          className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 transition hover:border-lime-300/20 hover:bg-white/[0.05]"
-        >
-          <Sparkles className="size-5 text-lime-300" />
-          <p className="mt-4 text-lg font-semibold text-white">Favorites</p>
-          <p className="mt-1 text-sm text-zinc-400">{favoriteCount} pinned movements</p>
-        </Link>
-        <Link
-          href={activeSession ? "/app/active-workout" : "/app/splits"}
-          className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4 transition hover:border-lime-300/20 hover:bg-white/[0.05]"
-        >
-          <FolderKanban className="size-5 text-cyan-300" />
-          <p className="mt-4 text-lg font-semibold text-white">Quick Access</p>
-          <p className="mt-1 text-sm text-zinc-400">
-            {activeSession ? "Return to your live workout" : `${completedCount} sessions logged`}
-          </p>
-        </Link>
       </section>
     </div>
   );
