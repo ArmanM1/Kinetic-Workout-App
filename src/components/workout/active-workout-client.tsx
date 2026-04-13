@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState } from "react";
-import { Heart, Plus, Search, Trash2, X } from "lucide-react";
+import { FolderHeart, Heart, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
+import { CustomExerciseDialog } from "@/components/exercises/custom-exercise-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +72,7 @@ export function ActiveWorkoutClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySection, setLibrarySection] = useState<"all" | "favorites" | "recent">("all");
   const [finishDialogOpen, setFinishDialogOpen] = useState(false);
   const [finishNotes, setFinishNotes] = useState("");
   const [restNow, setRestNow] = useState(0);
@@ -91,7 +93,19 @@ export function ActiveWorkoutClient() {
   );
   const filteredExercises = searchExercises(visibleCatalog, deferredQuery, {
     source: "all",
-  }).slice(0, 12);
+  })
+    .filter((exercise) => {
+      if (librarySection === "favorites") {
+        return settings.favoriteExerciseSlugs.includes(exercise.slug);
+      }
+
+      if (librarySection === "recent") {
+        return recentExerciseSlugs.includes(exercise.slug);
+      }
+
+      return true;
+    })
+    .slice(0, 16);
   const catalogBySlug = new Map(catalog.map((exercise) => [exercise.slug, exercise]));
   const quickExercises = Array.from(
     new Set([
@@ -106,6 +120,7 @@ export function ActiveWorkoutClient() {
   function handleAddExercise(exerciseSlug: string) {
     addExercise(exerciseSlug);
     setSearchQuery("");
+    setLibrarySection("all");
     setLibraryOpen(false);
   }
 
@@ -163,7 +178,26 @@ export function ActiveWorkoutClient() {
       <Drawer open={libraryOpen} onOpenChange={setLibraryOpen}>
         <DrawerContent className="border-white/10 bg-zinc-950 text-white">
           <DrawerHeader className="px-5 pb-2 pt-5 text-left">
-            <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
+              <CustomExerciseDialog
+                description="Create and add something unique without leaving the workout."
+                onCreated={({ name, slug }) => {
+                  setSearchQuery(name);
+                  handleAddExercise(slug);
+                }}
+                title="Create exercise"
+                trigger={
+                  <button
+                    type="button"
+                    className="lift-tap flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-zinc-300 transition hover:border-lime-300/30 hover:text-white"
+                  >
+                    <Sparkles className="size-3.5 text-lime-300" />
+                    Custom
+                  </button>
+                }
+              />
+            </div>
           </DrawerHeader>
           <div className="space-y-4 px-5 pb-5">
             <div className="relative">
@@ -174,6 +208,32 @@ export function ActiveWorkoutClient() {
                 className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
                 placeholder="Search exercises..."
               />
+            </div>
+            <div className="flex items-center gap-2">
+              {[
+                { id: "all" as const, label: "All", icon: Search },
+                { id: "favorites" as const, label: "Favorites", icon: FolderHeart },
+                { id: "recent" as const, label: "Recent", icon: Sparkles },
+              ].map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setLibrarySection(item.id)}
+                    className={cn(
+                      "lift-tap flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] transition",
+                      librarySection === item.id
+                        ? "border-lime-300/30 bg-lime-300/10 text-lime-200"
+                        : "border-white/8 bg-white/[0.02] text-zinc-500 hover:text-white",
+                    )}
+                  >
+                    <Icon className="size-3.5" />
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
             {searchQuery.trim() === "" && quickExercises.length > 0 ? (
               <div className="space-y-2">
@@ -200,7 +260,7 @@ export function ActiveWorkoutClient() {
                   key={exercise.slug}
                   type="button"
                   onClick={() => handleAddExercise(exercise.slug)}
-                  className="flex w-full items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
+                  className="lift-tap flex w-full items-center justify-between rounded-[1.7rem] border border-white/8 bg-white/[0.03] px-4 py-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-base font-medium text-white">{exercise.name}</p>
@@ -262,8 +322,8 @@ export function ActiveWorkoutClient() {
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-4 pb-44">
-        <section className="space-y-4 rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 text-white">
+      <div className="ios-page space-y-4 pb-44">
+        <section className="ios-card space-y-4 rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 text-white">
           <div className="flex items-start justify-between gap-3">
             <div>
               <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-100">
@@ -310,7 +370,7 @@ export function ActiveWorkoutClient() {
         </section>
 
         {activeSession.exercises.length === 0 ? (
-          <Card className="border-dashed border-white/12 bg-white/[0.03] text-white">
+          <Card className="ios-card border-dashed border-white/12 bg-white/[0.03] text-white">
             <CardContent className="space-y-4 p-5">
               <p className="text-2xl font-semibold">Add your first exercise</p>
               <Button
@@ -341,7 +401,7 @@ export function ActiveWorkoutClient() {
               return (
                 <Card
                   key={exercise.id}
-                  className="overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white"
+                  className="ios-card overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white"
                 >
                   <CardContent className="p-0">
                     <div className="border-b border-white/6 px-4 py-4">
@@ -526,7 +586,7 @@ export function ActiveWorkoutClient() {
             <button
               type="button"
               onClick={() => setLibraryOpen(true)}
-              className="w-full rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-4 text-center text-sm font-medium text-zinc-400 transition hover:border-lime-300/20 hover:text-white"
+              className="lift-tap w-full rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-4 text-center text-sm font-medium text-zinc-400 transition hover:border-lime-300/20 hover:text-white"
             >
               + Add another exercise
             </button>

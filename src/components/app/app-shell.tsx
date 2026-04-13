@@ -26,15 +26,16 @@ export function AppShell({
   const workoutTitle = activeSession?.title.trim() ? activeSession.title : "Blank Workout";
 
   return (
-    <div
-      className={cn(
-        "min-h-screen text-white",
-        isExerciseRoute
-          ? "bg-[linear-gradient(180deg,_#090b0c_0%,_#050607_48%,_#020303_100%)]"
-          : "bg-[radial-gradient(circle_at_top,_rgba(196,255,57,0.16),_transparent_32%),linear-gradient(180deg,_#090b0c_0%,_#050607_48%,_#020303_100%)]",
-      )}
-    >
-      <header className="sticky top-0 z-30 bg-zinc-950/70 backdrop-blur">
+    <div className="min-h-screen bg-[#020304] text-white sm:p-3">
+      <div
+        className={cn(
+          "mobile-app-shell relative mx-auto min-h-screen max-w-[28rem] overflow-x-hidden",
+          isExerciseRoute
+            ? "bg-[linear-gradient(180deg,_#090b0c_0%,_#050607_48%,_#020303_100%)]"
+            : "bg-[radial-gradient(circle_at_top,_rgba(196,255,57,0.16),_transparent_32%),linear-gradient(180deg,_#090b0c_0%,_#050607_48%,_#020303_100%)]",
+        )}
+      >
+      <header className="sticky top-0 z-30 bg-zinc-950/65 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[27rem] items-center justify-between gap-4 px-4 pb-3 pt-5">
           <div className="flex items-center gap-3">
             <Logo showWordmark={false} />
@@ -108,6 +109,7 @@ export function AppShell({
       ) : null}
 
       <BottomNav />
+      </div>
     </div>
   );
 }

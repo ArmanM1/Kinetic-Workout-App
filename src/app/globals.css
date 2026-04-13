@@ -97,6 +97,30 @@
 }
 
 @layer utilities {
+  @keyframes ios-page-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.985);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes ios-card-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .text-balance {
     text-wrap: balance;
   }
@@ -108,5 +132,64 @@
 
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  .mobile-app-shell {
+    isolation: isolate;
+  }
+
+  .ios-page {
+    animation: ios-page-rise 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ios-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+    box-shadow: 0 24px 80px -54px rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+  }
+
+  .ios-stagger > * {
+    animation: ios-card-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ios-stagger > *:nth-child(1) {
+    animation-delay: 40ms;
+  }
+
+  .ios-stagger > *:nth-child(2) {
+    animation-delay: 90ms;
+  }
+
+  .ios-stagger > *:nth-child(3) {
+    animation-delay: 140ms;
+  }
+
+  .ios-stagger > *:nth-child(4) {
+    animation-delay: 190ms;
+  }
+
+  .lift-tap {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .lift-tap:active {
+    transform: scale(0.98) translateY(1px);
+  }
+
+  @media (min-width: 640px) {
+    .mobile-app-shell {
+      min-height: calc(100vh - 1.5rem);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 2.5rem;
+      box-shadow:
+        0 32px 120px -42px rgba(0, 0, 0, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
   }
 }

@@ -2,20 +2,12 @@
 
 import Link from "next/link";
 import { useDeferredValue, useState } from "react";
-import { ChevronRight, Plus, Search, Star } from "lucide-react";
+import { ChevronRight, Clock3, FolderHeart, Plus, Search, Sparkles, Star } from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
+import { CustomExerciseDialog } from "@/components/exercises/custom-exercise-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { searchExercises } from "@/lib/data/catalog";
 import { cn } from "@/lib/utils";
 import type { ExerciseCatalogItem } from "@/types/kinetic";
@@ -75,19 +67,15 @@ export function ExerciseBrowser() {
     recentExerciseSlugs,
     settings,
     toggleFavorite,
-    createCustomExercise,
   } = useWorkoutStore();
   const [query, setQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<(typeof muscleGroups)[number]["id"]>("all");
   const [sortMode, setSortMode] = useState<(typeof sortModes)[number]["id"]>("alpha");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [customEquipment, setCustomEquipment] = useState("");
-  const [customPrimaryMuscles, setCustomPrimaryMuscles] = useState("");
   const deferredQuery = useDeferredValue(query);
 
   const favorites = settings.favoriteExerciseSlugs;
   const archived = settings.archivedExerciseSlugs;
+  const customExercises = catalog.filter((exercise) => exercise.source === "custom").length;
 
   const exercises = searchExercises(
     catalog.filter((exercise) => !archived.includes(exercise.slug)),
@@ -133,96 +121,79 @@ export function ExerciseBrowser() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="ios-page space-y-5">
       <section className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-4xl font-semibold tracking-tight text-white">Exercises</h1>
           <p className="mt-1 text-sm text-zinc-500">Find it fast, favorite it, and move on.</p>
         </div>
-
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+        <CustomExerciseDialog
+          onCreated={({ name }) => setQuery(name)}
+          trigger={
             <Button
               size="icon-lg"
-              className="rounded-2xl bg-lime-300 text-zinc-950 hover:bg-lime-200"
+              className="lift-tap rounded-2xl bg-lime-300 text-zinc-950 hover:bg-lime-200"
             >
               <Plus className="size-5" />
               <span className="sr-only">Create exercise</span>
             </Button>
-          </DialogTrigger>
-          <DialogContent className="border border-white/10 bg-zinc-950 text-white">
-            <DialogHeader>
-              <DialogTitle>Create custom exercise</DialogTitle>
-              <DialogDescription className="text-zinc-400">
-                Add a movement that feels native inside your library.
-              </DialogDescription>
-            </DialogHeader>
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                const trimmedName = customName.trim();
-                const primaryMuscles = customPrimaryMuscles
-                  .split(",")
-                  .map((token) => token.trim())
-                  .filter(Boolean);
-
-                if (!trimmedName || primaryMuscles.length === 0) {
-                  return;
-                }
-
-                createCustomExercise({
-                  name: trimmedName,
-                  equipment: customEquipment.trim() || "custom",
-                  primaryMuscles,
-                });
-                setCustomName("");
-                setCustomEquipment("");
-                setCustomPrimaryMuscles("");
-                setQuery(trimmedName);
-                setDialogOpen(false);
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="exercise-name">Exercise name</Label>
-                <Input
-                  id="exercise-name"
-                  value={customName}
-                  onChange={(event) => setCustomName(event.target.value)}
-                  placeholder="Standing cable crunch"
-                  className="h-11 rounded-2xl border-white/10 bg-white/[0.03] px-4 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="exercise-equipment">Equipment</Label>
-                <Input
-                  id="exercise-equipment"
-                  value={customEquipment}
-                  onChange={(event) => setCustomEquipment(event.target.value)}
-                  placeholder="Cable"
-                  className="h-11 rounded-2xl border-white/10 bg-white/[0.03] px-4 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="exercise-muscles">Primary muscles</Label>
-                <Input
-                  id="exercise-muscles"
-                  value={customPrimaryMuscles}
-                  onChange={(event) => setCustomPrimaryMuscles(event.target.value)}
-                  placeholder="Abs, Obliques"
-                  className="h-11 rounded-2xl border-white/10 bg-white/[0.03] px-4 text-white"
-                />
-              </div>
-              <Button className="h-11 w-full rounded-2xl bg-lime-300 text-zinc-950 hover:bg-lime-200">
-                Save exercise
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+          }
+        />
       </section>
 
       <section className="space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setSortMode("favorites");
+              setSelectedGroup("all");
+            }}
+            className={cn(
+              "lift-tap ios-card rounded-[1.6rem] p-4 text-left transition",
+              sortMode === "favorites" && "border-lime-300/30 bg-lime-300/10",
+            )}
+          >
+            <FolderHeart className="size-5 text-lime-300" />
+            <p className="mt-5 text-sm font-medium text-white">Favorites</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
+              {favorites.length} saved
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSortMode("recent");
+              setSelectedGroup("all");
+            }}
+            className={cn(
+              "lift-tap ios-card rounded-[1.6rem] p-4 text-left transition",
+              sortMode === "recent" && "border-sky-300/30 bg-sky-300/10",
+            )}
+          >
+            <Clock3 className="size-5 text-sky-300" />
+            <p className="mt-5 text-sm font-medium text-white">Recent</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
+              {recentExerciseSlugs.length} used
+            </p>
+          </button>
+          <CustomExerciseDialog
+            onCreated={({ name }) => setQuery(name)}
+            trigger={
+              <button
+                type="button"
+                className="lift-tap ios-card rounded-[1.6rem] p-4 text-left transition"
+              >
+                <Sparkles className="size-5 text-cyan-300" />
+                <p className="mt-5 text-sm font-medium text-white">Custom</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.22em] text-zinc-500">
+                  {customExercises} built
+                </p>
+              </button>
+            }
+          />
+        </div>
+
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
           <Input
@@ -275,11 +246,11 @@ export function ExerciseBrowser() {
       </section>
 
       {sortMode === "alpha" ? (
-        <div className="space-y-5">
+        <div className="ios-stagger space-y-5">
           {Object.entries(groupedExercises).map(([letter, group]) => (
             <section key={letter} className="space-y-3">
               <p className="px-1 text-sm font-medium text-zinc-500">{letter}</p>
-              <div className="overflow-hidden rounded-[1.5rem] border border-white/8 bg-white/[0.03]">
+              <div className="ios-card overflow-hidden rounded-[1.75rem] border border-white/8 bg-white/[0.03]">
                 {group.map((exercise, index) => {
                   const favorite = favorites.includes(exercise.slug);
 
@@ -327,7 +298,7 @@ export function ExerciseBrowser() {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-[1.5rem] border border-white/8 bg-white/[0.03]">
+        <div className="ios-card overflow-hidden rounded-[1.75rem] border border-white/8 bg-white/[0.03]">
           {sortedExercises.map((exercise, index) => {
             const favorite = favorites.includes(exercise.slug);
 
@@ -374,7 +345,7 @@ export function ExerciseBrowser() {
       )}
 
       {sortedExercises.length === 0 ? (
-        <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center text-sm text-zinc-400">
+        <div className="ios-card rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center text-sm text-zinc-400">
           No exercises match that search yet.
         </div>
       ) : null}
