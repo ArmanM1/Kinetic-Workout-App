@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kinetic
 
-## Getting Started
+Kinetic is a premium-feeling, mobile-first workout tracker for lifters who want structured data without friction. The core experience prioritizes fast logging, previous-value autofill, one active workout at a time, flexible split launches, and analytics that remain useful for advanced training.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS v4
+- shadcn/ui
+- Supabase Auth + Postgres + SSR utilities
+- TanStack Query
+- Playwright
+- Vercel hosting
+
+## Environment
+
+Required app env vars:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SITE_URL` for callback-safe absolute URLs in local development
+
+Optional server-only env vars:
+
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Current setup status:
+
+- Local `.env.local` is populated for Supabase browser auth
+- Vercel development and production envs have the Supabase public keys
+- Preview env automation still depends on connecting the Vercel project to the GitHub repo
+
+## Commands
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
+pnpm build
+pnpm lint
+pnpm test
+pnpm test:e2e
+pnpm catalog:sync
+pnpm catalog:seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Repository notes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- GitHub remote: `https://github.com/ArmanM1/Kinetic-Workout-App.git`
+- Vercel project link: `project-afpcu`
+- Latest verified preview deployment: `https://project-afpcu-hndbixlv0-armans-projects.vercel.app`
+- Supabase local config lives under `supabase/`
+- `SETUP_BLOCKERS.md` records any external setup step that still needs a manual action
