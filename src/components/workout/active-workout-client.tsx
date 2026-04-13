@@ -369,8 +369,16 @@ export function ActiveWorkoutClient() {
                           ) : null}
                         </div>
                         <div className="flex items-start gap-2">
-                          <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.22em] text-zinc-300">
-                            Est 1RM {estimatedOneRepMax > 0 ? estimatedOneRepMax : "--"}
+                          <div className="flex min-w-[3.5rem] flex-col items-center rounded-[1.2rem] border border-white/10 bg-black/20 px-2.5 py-1.5 text-center">
+                            <p className="text-[0.5rem] font-semibold uppercase leading-none tracking-[0.24em] text-zinc-500">
+                              Est
+                            </p>
+                            <p className="mt-0.5 text-[0.5rem] font-semibold uppercase leading-none tracking-[0.24em] text-zinc-500">
+                              1RM
+                            </p>
+                            <p className="mt-1 text-[0.78rem] font-semibold leading-none text-sky-300">
+                              {estimatedOneRepMax > 0 ? estimatedOneRepMax : "--"}
+                            </p>
                           </div>
                           <button
                             type="button"
