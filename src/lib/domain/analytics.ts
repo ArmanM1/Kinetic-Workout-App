@@ -6,6 +6,7 @@ import type {
   BodyMetricEntry,
   CompletedWorkoutSession,
   DashboardStat,
+  SessionExercise,
   UserProfile,
 } from "@/types/kinetic";
 
@@ -15,6 +16,26 @@ export function estimateOneRepMax(weight: number, reps: number) {
   }
 
   return weight * (1 + reps / 30);
+}
+
+export function calculateExerciseEstimatedOneRepMax(
+  exercise: Pick<SessionExercise, "sets" | "tag">,
+  bodyWeight: number | null,
+) {
+  return Math.round(
+    exercise.sets.reduce((top, set) => {
+      if (!set.completedReps) {
+        return top;
+      }
+
+      const candidate = estimateOneRepMax(
+        calculateEffectiveLoad(set, exercise.tag, bodyWeight),
+        set.completedReps,
+      );
+
+      return Math.max(top, candidate);
+    }, 0),
+  );
 }
 
 export function calculateCurrentAndLongestStreak(

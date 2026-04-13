@@ -52,6 +52,7 @@ type WorkoutContextValue = KineticStoreState & {
   addSet: (exerciseId: string) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   moveExercise: (fromIndex: number, toIndex: number) => void;
+  updateActiveSessionTitle: (title: string) => void;
   finishActiveSession: (notes: string) => void;
   clearActiveSession: () => void;
   toggleFavorite: (exerciseSlug: string) => void;
@@ -241,6 +242,21 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         return {
           ...current,
           activeSession: moveSessionExercise(current.activeSession, fromIndex, toIndex),
+        };
+      });
+    },
+    updateActiveSessionTitle(title) {
+      setStore((current) => {
+        if (!current.activeSession) {
+          return current;
+        }
+
+        return {
+          ...current,
+          activeSession: {
+            ...current.activeSession,
+            title,
+          },
         };
       });
     },

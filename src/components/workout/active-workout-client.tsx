@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { searchExercises } from "@/lib/data/catalog";
+import { calculateExerciseEstimatedOneRepMax } from "@/lib/domain/analytics";
 import type { ExerciseCatalogItem } from "@/types/kinetic";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,7 @@ export function ActiveWorkoutClient() {
     selectSet,
     startBlankSession,
     toggleFavorite,
+    updateActiveSessionTitle,
     updateDraft,
   } = useWorkoutStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,6 +92,7 @@ export function ActiveWorkoutClient() {
   const filteredExercises = searchExercises(visibleCatalog, deferredQuery, {
     source: "all",
   }).slice(0, 12);
+  const catalogBySlug = new Map(catalog.map((exercise) => [exercise.slug, exercise]));
   const quickExercises = Array.from(
     new Set([
       ...settings.favoriteExerciseSlugs,
@@ -140,6 +143,7 @@ export function ActiveWorkoutClient() {
     null;
   const activeSet =
     activeExercise?.sets.find((set) => set.id === activeSession.activeSetId) ?? null;
+  const workoutTitle = activeSession.title.trim() || "Blank Workout";
   const activeSetHasValues = Boolean(
     activeSet &&
       (activeSet.draftWeight != null ||
@@ -201,7 +205,7 @@ export function ActiveWorkoutClient() {
                   <div className="min-w-0">
                     <p className="truncate text-base font-medium text-white">{exercise.name}</p>
                     <p className="mt-1 truncate text-sm text-zinc-400">
-                      {exercise.anatomyLabel} · {exercise.equipment ?? "Bodyweight"}
+                      {exercise.anatomyLabel} / {exercise.equipment ?? "Bodyweight"}
                     </p>
                   </div>
                   <div className="flex size-10 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950">
@@ -265,7 +269,19 @@ export function ActiveWorkoutClient() {
               <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-100">
                 {activeSession.entryPoint === "blank" ? "Blank workout" : "Split day"}
               </Badge>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">{activeSession.title}</h1>
+              {activeSession.entryPoint === "blank" ? (
+                <Input
+                  value={activeSession.title}
+                  onChange={(event) => updateActiveSessionTitle(event.target.value)}
+                  onBlur={(event) =>
+                    updateActiveSessionTitle(event.target.value.trim() || "Blank Workout")
+                  }
+                  placeholder="Blank Workout"
+                  className="mt-3 h-auto border-0 bg-transparent p-0 text-4xl font-semibold tracking-tight text-white shadow-none placeholder:text-white focus-visible:ring-0"
+                />
+              ) : (
+                <h1 className="mt-3 text-4xl font-semibold tracking-tight">{workoutTitle}</h1>
+              )}
               <p className="mt-2 text-sm text-zinc-500">
                 {new Intl.DateTimeFormat("en-US", {
                   hour: "numeric",
@@ -309,8 +325,17 @@ export function ActiveWorkoutClient() {
         ) : (
           <div className="space-y-4">
             {activeSession.exercises.map((exercise) => {
+              const catalogExercise = catalogBySlug.get(exercise.exerciseSlug);
+              const muscleTag =
+                catalogExercise?.anatomyLabel ??
+                catalogExercise?.primaryMuscles[0] ??
+                "Full body";
               const previousSession = history.find((session) =>
                 session.exercises.some((entry) => entry.exerciseSlug === exercise.exerciseSlug),
+              );
+              const estimatedOneRepMax = calculateExerciseEstimatedOneRepMax(
+                exercise,
+                profile.bodyWeight,
               );
 
               return (
@@ -326,6 +351,12 @@ export function ActiveWorkoutClient() {
                             <p className="truncate text-xl font-semibold">{exercise.exerciseName}</p>
                             <Badge
                               variant="outline"
+                              className="border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
+                            >
+                              {muscleTag}
+                            </Badge>
+                            <Badge
+                              variant="outline"
                               className="border-white/10 bg-white/[0.03] text-zinc-300"
                             >
                               {exercise.tag.replace("_", " ")}
@@ -337,25 +368,30 @@ export function ActiveWorkoutClient() {
                             </p>
                           ) : null}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(exercise.exerciseSlug)}
-                          className={cn(
-                            "flex size-10 shrink-0 items-center justify-center rounded-2xl border transition",
-                            settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug)
-                              ? "border-lime-300/20 bg-lime-300/10 text-lime-300"
-                              : "border-white/10 bg-black/20 text-zinc-500 hover:text-white",
-                          )}
-                        >
-                          <Heart
+                        <div className="flex items-start gap-2">
+                          <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.22em] text-zinc-300">
+                            Est 1RM {estimatedOneRepMax > 0 ? estimatedOneRepMax : "--"}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(exercise.exerciseSlug)}
                             className={cn(
-                              "size-4",
-                              settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug) &&
-                                "fill-current",
+                              "flex size-10 shrink-0 items-center justify-center rounded-2xl border transition",
+                              settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug)
+                                ? "border-lime-300/20 bg-lime-300/10 text-lime-300"
+                                : "border-white/10 bg-black/20 text-zinc-500 hover:text-white",
                             )}
-                          />
-                          <span className="sr-only">Toggle favorite</span>
-                        </button>
+                          >
+                            <Heart
+                              className={cn(
+                                "size-4",
+                                settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug) &&
+                                  "fill-current",
+                              )}
+                            />
+                            <span className="sr-only">Toggle favorite</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -400,7 +436,7 @@ export function ActiveWorkoutClient() {
                               </button>
                               {set.previousWeight != null || set.previousReps != null ? (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
-                                  {set.previousWeight ?? "-"} {profile.weightUnit} × {set.previousReps ?? "-"}
+                                  {set.previousWeight ?? "-"} {profile.weightUnit} x {set.previousReps ?? "-"}
                                 </p>
                               ) : (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-600">
@@ -463,7 +499,7 @@ export function ActiveWorkoutClient() {
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                       <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
                         {activeSession.activeExerciseId === exercise.id && activeSet
-                          ? `${activeSet.previousWeight ?? "-"} ${profile.weightUnit} × ${activeSet.previousReps ?? "-"}`
+                          ? `${activeSet.previousWeight ?? "-"} ${profile.weightUnit} x ${activeSet.previousReps ?? "-"}`
                           : `${exercise.sets.length} sets`}
                       </p>
                       <button

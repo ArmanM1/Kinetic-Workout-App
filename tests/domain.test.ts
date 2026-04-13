@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDashboardStats, calculateCurrentAndLongestStreak, estimateOneRepMax } from "@/lib/domain/analytics";
+import {
+  buildDashboardStats,
+  calculateCurrentAndLongestStreak,
+  calculateExerciseEstimatedOneRepMax,
+  estimateOneRepMax,
+} from "@/lib/domain/analytics";
 import {
   addExerciseToSession,
   calculateEffectiveLoad,
@@ -99,4 +104,14 @@ test("dashboard stats report logged sessions and total volume", () => {
 
   assert.equal(stats[0].value, String(state.history.length));
   assert.match(stats[2].value, /\d/);
+});
+
+test("exercise estimated 1RM uses the best logged set", () => {
+  const state = createInitialStoreState();
+  const estimated = calculateExerciseEstimatedOneRepMax(
+    state.history[0].exercises[0],
+    state.profile.bodyWeight,
+  );
+
+  assert.equal(estimated, 252);
 });
