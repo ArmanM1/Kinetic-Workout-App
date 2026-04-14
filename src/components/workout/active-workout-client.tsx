@@ -101,6 +101,7 @@ export function ActiveWorkoutClient() {
   const [restNow, setRestNow] = useState(0);
   const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(null);
   const [keyboardInset, setKeyboardInset] = useState(0);
+  const [prefersDockEditor, setPrefersDockEditor] = useState(false);
   const [pendingDeleteSet, setPendingDeleteSet] = useState<{
     exerciseId: string;
     setId: string;
@@ -151,6 +152,23 @@ export function ActiveWorkoutClient() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncDockPreference = () => {
+      setPrefersDockEditor(window.innerWidth < 640);
+    };
+
+    syncDockPreference();
+    window.addEventListener("resize", syncDockPreference);
+
+    return () => {
+      window.removeEventListener("resize", syncDockPreference);
+    };
+  }, []);
+
   const visibleCatalog = catalog.filter(
     (exercise) => !settings.archivedExerciseSlugs.includes(exercise.slug),
   );
@@ -183,10 +201,6 @@ export function ActiveWorkoutClient() {
   const filteredExercises = searchExercises(librarySource, deferredQuery, {
     source: "all",
   }).slice(0, 24);
-  const isKeyboardOpen = keyboardInset > 0;
-  const workoutBottomPadding = isKeyboardOpen ? keyboardInset + 232 : 176;
-  const actionBarBottom = isKeyboardOpen ? keyboardInset + 12 : 96;
-  const restTimerBottom = isKeyboardOpen ? keyboardInset + 88 : 160;
   const activeExercise =
     activeSession?.exercises.find((exercise) => exercise.id === activeSession?.activeExerciseId) ??
     null;
@@ -211,6 +225,12 @@ export function ActiveWorkoutClient() {
       ? activeSet?.assistAmount ?? ""
       : activeSet?.draftWeight ?? "";
   const activeRepsValue = activeSet?.draftReps ?? "";
+  const isKeyboardOpen = keyboardInset > 0;
+  const isDockEditorOpen = Boolean(prefersDockEditor && activeSet);
+  const dockEditorBottom = isKeyboardOpen ? keyboardInset + 8 : 84;
+  const workoutBottomPadding = isDockEditorOpen ? dockEditorBottom + 188 : 176;
+  const actionBarBottom = isKeyboardOpen ? keyboardInset + 12 : 96;
+  const restTimerBottom = isKeyboardOpen ? keyboardInset + 88 : 160;
 
   function handleAddExercise(exerciseSlug: string) {
     addExercise(exerciseSlug);
@@ -222,14 +242,14 @@ export function ActiveWorkoutClient() {
   function focusSet(
     exerciseId: string,
     setId: string,
-    options?: { field?: "load" | "reps"; restoreDock?: boolean },
+    options?: { field?: "load" | "reps"; openDock?: boolean; maintainDock?: boolean },
   ) {
     if (options?.field) {
       dockFieldRef.current = options.field;
     }
 
-    if (options?.restoreDock) {
-      pendingDockFocusRef.current = options?.field ?? dockFieldRef.current;
+    if (prefersDockEditor && (options?.openDock || options?.maintainDock)) {
+      pendingDockFocusRef.current = options.field ?? dockFieldRef.current;
     }
 
     selectSet(exerciseId, setId);
@@ -260,7 +280,7 @@ export function ActiveWorkoutClient() {
   }
 
   function handleLogSet() {
-    if (isKeyboardOpen && activeSet) {
+    if (isDockEditorOpen && activeSet) {
       pendingDockFocusRef.current = dockFieldRef.current;
     }
 
@@ -268,7 +288,7 @@ export function ActiveWorkoutClient() {
   }
 
   useEffect(() => {
-    if (!isKeyboardOpen || !activeSet || !pendingDockFocusRef.current) {
+    if (!isDockEditorOpen || !activeSet || !pendingDockFocusRef.current) {
       if (!activeSet) {
         pendingDockFocusRef.current = null;
       }
@@ -286,10 +306,10 @@ export function ActiveWorkoutClient() {
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [activeSet, isKeyboardOpen]);
+  }, [activeSet, isDockEditorOpen]);
 
   useEffect(() => {
-    if (!isKeyboardOpen || !activeSet) {
+    if (!isDockEditorOpen || !activeSet) {
       return;
     }
 
@@ -302,7 +322,7 @@ export function ActiveWorkoutClient() {
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [activeSet, isKeyboardOpen]);
+  }, [activeSet, isDockEditorOpen]);
 
   if (!activeSession) {
     return (
@@ -707,28 +727,28 @@ export function ActiveWorkoutClient() {
                           )}
                           onClick={() =>
                             focusSet(exercise.id, set.id, {
-                              restoreDock: isKeyboardOpen,
+                              maintainDock: isDockEditorOpen,
                             })
                           }
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              <button
-                              type="button"
-                              className={cn(
-                                "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
-                                isActive
-                                  ? "bg-lime-300 text-zinc-950"
-                                  : "bg-white/[0.06] text-white",
-                              )}
-                              onClick={() =>
-                                focusSet(exercise.id, set.id, {
-                                  restoreDock: isKeyboardOpen,
-                                })
-                              }
-                            >
+                            <button
+                                type="button"
+                                className={cn(
+                                  "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
+                                  isActive
+                                    ? "bg-lime-300 text-zinc-950"
+                                    : "bg-white/[0.06] text-white",
+                                )}
+                                onClick={() =>
+                                  focusSet(exercise.id, set.id, {
+                                    maintainDock: isDockEditorOpen,
+                                  })
+                                }
+                              >
                               {setIndex + 1}
-                            </button>
+                              </button>
                               {set.previousWeight != null || set.previousReps != null ? (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
                                   {set.previousWeight ?? "-"} {profile.weightUnit} x {set.previousReps ?? "-"}
@@ -757,31 +777,45 @@ export function ActiveWorkoutClient() {
                             </button>
                           </div>
 
-                          {isKeyboardOpen ? (
+                          {prefersDockEditor ? (
                             <div className="mt-3 grid grid-cols-2 gap-2">
-                              <div
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  focusSet(exercise.id, set.id, {
+                                    field: "load",
+                                    openDock: true,
+                                  })
+                                }
                                 className={cn(
-                                  "flex h-12 items-center rounded-2xl border px-4 text-base font-medium transition",
+                                  "flex h-12 items-center rounded-2xl border px-4 text-left text-base font-medium transition",
                                   isActive
                                     ? "border-lime-300/40 bg-lime-300/10 text-white"
                                     : "border-white/10 bg-black/20 text-zinc-300",
                                 )}
                               >
                                 {loadValue || (exercise.tag === "assisted" ? "Assist" : "Weight")}
-                              </div>
-                              <div
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  focusSet(exercise.id, set.id, {
+                                    field: "reps",
+                                    openDock: true,
+                                  })
+                                }
                                 className={cn(
-                                  "flex h-12 items-center rounded-2xl border px-4 text-base font-medium transition",
+                                  "flex h-12 items-center rounded-2xl border px-4 text-left text-base font-medium transition",
                                   isActive
                                     ? "border-lime-300/40 bg-lime-300/10 text-white"
                                     : "border-white/10 bg-black/20 text-zinc-300",
                                 )}
                               >
                                 {set.draftReps ?? "Reps"}
-                              </div>
+                              </button>
                               {isActive ? (
                                 <p className="col-span-2 text-[0.68rem] uppercase tracking-[0.22em] text-lime-200/70">
-                                  Editing in tray
+                                  Editing below
                                 </p>
                               ) : null}
                             </div>
@@ -796,7 +830,6 @@ export function ActiveWorkoutClient() {
                                 onFocus={() =>
                                   focusSet(exercise.id, set.id, {
                                     field: "load",
-                                    restoreDock: true,
                                   })
                                 }
                                 onChange={(event) =>
@@ -822,7 +855,6 @@ export function ActiveWorkoutClient() {
                                 onFocus={() =>
                                   focusSet(exercise.id, set.id, {
                                     field: "reps",
-                                    restoreDock: true,
                                   })
                                 }
                                 onChange={(event) =>
@@ -874,7 +906,7 @@ export function ActiveWorkoutClient() {
         )}
       </div>
 
-      {isRestTimerVisible && !isKeyboardOpen ? (
+      {isRestTimerVisible && !isDockEditorOpen ? (
         <div
           className="fixed inset-x-0 z-30 mx-auto flex w-[min(25rem,calc(100%-1.5rem))] justify-end px-1"
           style={{ bottom: `${restTimerBottom}px` }}
@@ -896,10 +928,10 @@ export function ActiveWorkoutClient() {
         </div>
       ) : null}
 
-      {isKeyboardOpen && activeExercise && activeSet ? (
+      {isDockEditorOpen && activeExercise && activeSet ? (
         <div
           className="fixed inset-x-0 z-40 mx-auto w-[min(25rem,calc(100%-1rem))] px-1"
-          style={{ bottom: `${keyboardInset + 8}px` }}
+          style={{ bottom: `${dockEditorBottom}px` }}
         >
           <div className="rounded-[1.65rem] border border-white/10 bg-zinc-950/96 p-3 text-white shadow-[0_24px_70px_-36px_rgba(0,0,0,0.92)] backdrop-blur">
             <div className="flex items-center justify-between gap-3">
@@ -917,6 +949,7 @@ export function ActiveWorkoutClient() {
                 onClick={() => {
                   dockLoadInputRef.current?.blur();
                   dockRepsInputRef.current?.blur();
+                  pendingDockFocusRef.current = null;
                 }}
                 className="flex size-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
               >
