@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { missingSupabaseEnv } from "@/lib/env";
+import { env, missingSupabaseEnv } from "@/lib/env";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function withMessage(path: string, message: string): never {
@@ -59,9 +60,39 @@ export async function signUpAction(formData: FormData) {
     withMessage("/auth/signup", "Supabase is not configured yet.");
   }
 
+  const adminSupabase = getSupabaseAdminClient();
+
+  if (adminSupabase) {
+    const { error } = await adminSupabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      withMessage("/auth/signup", error.message);
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      withMessage("/auth/login", signInError.message);
+    }
+
+    redirect("/app");
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: env.NEXT_PUBLIC_SITE_URL
+        ? `${env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+        : undefined,
+    },
   });
 
   if (error) {
@@ -71,7 +102,7 @@ export async function signUpAction(formData: FormData) {
   if (!data.session) {
     withMessage(
       "/auth/login",
-      "Account created. Confirm your email, then log in to finish your quick setup inside Kinetic.",
+      "Account created. Log in to finish your quick setup inside Kinetic.",
     );
   }
 
