@@ -20,6 +20,7 @@
 - Rebuilt analytics into mobile-friendly Overview and Body tabs with a selectable E1RM chart, clickable body-part drilldowns, balance scoring, per-region progress, and ranked lift lists
 - Made the workout screen more phone-safe by lifting floating controls above the mobile keyboard, scrolling focused sets into view, and folding Quick Add into the drawer's main section tabs
 - Hardened destructive workout actions with warning dialogs and added fullscreen/mobile-web-app shell hints so browser chrome gets out of the way more often
+- Switched workout logging to numeric mobile keyboards and a docked active-set editor that keeps other sets visible while `Log Set` advances focus through unfinished work
 - Connected Codex to the Supabase MCP server and verified that the remaining hosted auth blocker is the standalone Supabase CLI token step
 - Updated signup to surface a clear message when hosted Supabase still requires email confirmation
 - Verified `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`

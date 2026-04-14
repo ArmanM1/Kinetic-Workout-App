@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   FolderHeart,
@@ -108,6 +108,10 @@ export function ActiveWorkoutClient() {
     setNumber: number;
   } | null>(null);
   const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
+  const dockLoadInputRef = useRef<HTMLInputElement>(null);
+  const dockRepsInputRef = useRef<HTMLInputElement>(null);
+  const dockFieldRef = useRef<"load" | "reps">("load");
+  const pendingDockFocusRef = useRef<"load" | "reps" | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -180,9 +184,33 @@ export function ActiveWorkoutClient() {
     source: "all",
   }).slice(0, 24);
   const isKeyboardOpen = keyboardInset > 0;
-  const workoutBottomPadding = isKeyboardOpen ? keyboardInset + 176 : 176;
+  const workoutBottomPadding = isKeyboardOpen ? keyboardInset + 232 : 176;
   const actionBarBottom = isKeyboardOpen ? keyboardInset + 12 : 96;
   const restTimerBottom = isKeyboardOpen ? keyboardInset + 88 : 160;
+  const activeExercise =
+    activeSession?.exercises.find((exercise) => exercise.id === activeSession?.activeExerciseId) ??
+    null;
+  const activeSet =
+    activeExercise?.sets.find((set) => set.id === activeSession?.activeSetId) ?? null;
+  const workoutTitle = activeSession?.title.trim() || "Blank Workout";
+  const activeSetHasValues = Boolean(
+    activeSet &&
+      (activeSet.draftWeight != null ||
+        activeSet.draftReps != null ||
+        activeSet.previousWeight != null ||
+        activeSet.previousReps != null ||
+        activeSet.assistAmount != null),
+  );
+  const restSecondsRemaining = activeSession?.restTimerEndsAt
+    ? Math.max(0, Math.ceil((new Date(activeSession.restTimerEndsAt).getTime() - restNow) / 1000))
+    : 0;
+  const isRestTimerVisible =
+    restSecondsRemaining > 0 && dismissedTimerKey !== activeSession?.restTimerEndsAt;
+  const activeLoadValue =
+    activeExercise?.tag === "assisted"
+      ? activeSet?.assistAmount ?? ""
+      : activeSet?.draftWeight ?? "";
+  const activeRepsValue = activeSet?.draftReps ?? "";
 
   function handleAddExercise(exerciseSlug: string) {
     addExercise(exerciseSlug);
@@ -191,7 +219,19 @@ export function ActiveWorkoutClient() {
     setLibraryOpen(false);
   }
 
-  function focusSet(exerciseId: string, setId: string) {
+  function focusSet(
+    exerciseId: string,
+    setId: string,
+    options?: { field?: "load" | "reps"; restoreDock?: boolean },
+  ) {
+    if (options?.field) {
+      dockFieldRef.current = options.field;
+    }
+
+    if (options?.restoreDock) {
+      pendingDockFocusRef.current = options?.field ?? dockFieldRef.current;
+    }
+
     selectSet(exerciseId, setId);
 
     window.setTimeout(() => {
@@ -200,6 +240,69 @@ export function ActiveWorkoutClient() {
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 80);
   }
+
+  function handleActiveSetDraftUpdate(
+    field: "load" | "reps",
+    value: string,
+  ) {
+    if (!activeExercise || !activeSet) {
+      return;
+    }
+
+    dockFieldRef.current = field;
+    updateDraft(activeExercise.id, activeSet.id, {
+      [field === "load"
+        ? activeExercise.tag === "assisted"
+          ? "assistAmount"
+          : "draftWeight"
+        : "draftReps"]: parseNumericInput(value),
+    });
+  }
+
+  function handleLogSet() {
+    if (isKeyboardOpen && activeSet) {
+      pendingDockFocusRef.current = dockFieldRef.current;
+    }
+
+    logFocusedSet();
+  }
+
+  useEffect(() => {
+    if (!isKeyboardOpen || !activeSet || !pendingDockFocusRef.current) {
+      if (!activeSet) {
+        pendingDockFocusRef.current = null;
+      }
+      return;
+    }
+
+    const field = pendingDockFocusRef.current;
+    const target = field === "reps" ? dockRepsInputRef.current : dockLoadInputRef.current;
+    const timeout = window.setTimeout(() => {
+      target?.focus();
+      target?.select();
+      pendingDockFocusRef.current = null;
+    }, 60);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [activeSet, isKeyboardOpen]);
+
+  useEffect(() => {
+    if (!isKeyboardOpen || !activeSet) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(`[data-set-id="${activeSet.id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 90);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [activeSet, isKeyboardOpen]);
 
   if (!activeSession) {
     return (
@@ -229,26 +332,6 @@ export function ActiveWorkoutClient() {
       </div>
     );
   }
-
-  const activeExercise =
-    activeSession.exercises.find((exercise) => exercise.id === activeSession.activeExerciseId) ??
-    null;
-  const activeSet =
-    activeExercise?.sets.find((set) => set.id === activeSession.activeSetId) ?? null;
-  const workoutTitle = activeSession.title.trim() || "Blank Workout";
-  const activeSetHasValues = Boolean(
-    activeSet &&
-      (activeSet.draftWeight != null ||
-        activeSet.draftReps != null ||
-        activeSet.previousWeight != null ||
-        activeSet.previousReps != null ||
-        activeSet.assistAmount != null),
-  );
-  const restSecondsRemaining = activeSession.restTimerEndsAt
-    ? Math.max(0, Math.ceil((new Date(activeSession.restTimerEndsAt).getTime() - restNow) / 1000))
-    : 0;
-  const isRestTimerVisible =
-    restSecondsRemaining > 0 && dismissedTimerKey !== activeSession.restTimerEndsAt;
 
   return (
     <>
@@ -622,7 +705,11 @@ export function ActiveWorkoutClient() {
                             isLogged && !isActive && "border-white/6 bg-white/[0.03]",
                             !isActive && !isLogged && "border-transparent bg-black/20",
                           )}
-                          onClick={() => focusSet(exercise.id, set.id)}
+                          onClick={() =>
+                            focusSet(exercise.id, set.id, {
+                              restoreDock: isKeyboardOpen,
+                            })
+                          }
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
@@ -634,7 +721,11 @@ export function ActiveWorkoutClient() {
                                   ? "bg-lime-300 text-zinc-950"
                                   : "bg-white/[0.06] text-white",
                               )}
-                              onClick={() => focusSet(exercise.id, set.id)}
+                              onClick={() =>
+                                focusSet(exercise.id, set.id, {
+                                  restoreDock: isKeyboardOpen,
+                                })
+                              }
                             >
                               {setIndex + 1}
                             </button>
@@ -666,41 +757,89 @@ export function ActiveWorkoutClient() {
                             </button>
                           </div>
 
-                          <div className="mt-3 grid grid-cols-2 gap-2">
-                            <Input
-                              value={loadValue}
-                              onFocus={() => focusSet(exercise.id, set.id)}
-                              onChange={(event) =>
-                                updateDraft(exercise.id, set.id, {
-                                  [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
-                                    parseNumericInput(event.target.value),
-                                })
-                              }
-                              className={cn(
-                                "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
-                                isActive
-                                  ? "border-lime-300/40 bg-lime-300/10"
-                                  : "border-white/10 bg-black/20",
-                              )}
-                              placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
-                            />
-                            <Input
-                              value={set.draftReps ?? ""}
-                              onFocus={() => focusSet(exercise.id, set.id)}
-                              onChange={(event) =>
-                                updateDraft(exercise.id, set.id, {
-                                  draftReps: parseNumericInput(event.target.value),
-                                })
-                              }
-                              className={cn(
-                                "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
-                                isActive
-                                  ? "border-lime-300/40 bg-lime-300/10"
-                                  : "border-white/10 bg-black/20",
-                              )}
-                              placeholder="Reps"
-                            />
-                          </div>
+                          {isKeyboardOpen ? (
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <div
+                                className={cn(
+                                  "flex h-12 items-center rounded-2xl border px-4 text-base font-medium transition",
+                                  isActive
+                                    ? "border-lime-300/40 bg-lime-300/10 text-white"
+                                    : "border-white/10 bg-black/20 text-zinc-300",
+                                )}
+                              >
+                                {loadValue || (exercise.tag === "assisted" ? "Assist" : "Weight")}
+                              </div>
+                              <div
+                                className={cn(
+                                  "flex h-12 items-center rounded-2xl border px-4 text-base font-medium transition",
+                                  isActive
+                                    ? "border-lime-300/40 bg-lime-300/10 text-white"
+                                    : "border-white/10 bg-black/20 text-zinc-300",
+                                )}
+                              >
+                                {set.draftReps ?? "Reps"}
+                              </div>
+                              {isActive ? (
+                                <p className="col-span-2 text-[0.68rem] uppercase tracking-[0.22em] text-lime-200/70">
+                                  Editing in tray
+                                </p>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <Input
+                                value={loadValue}
+                                inputMode={exercise.tag === "assisted" ? "numeric" : "decimal"}
+                                enterKeyHint="next"
+                                autoComplete="off"
+                                pattern="[0-9]*[.,]?[0-9]*"
+                                onFocus={() =>
+                                  focusSet(exercise.id, set.id, {
+                                    field: "load",
+                                    restoreDock: true,
+                                  })
+                                }
+                                onChange={(event) =>
+                                  updateDraft(exercise.id, set.id, {
+                                    [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
+                                      parseNumericInput(event.target.value),
+                                  })
+                                }
+                                className={cn(
+                                  "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
+                                  isActive
+                                    ? "border-lime-300/40 bg-lime-300/10"
+                                    : "border-white/10 bg-black/20",
+                                )}
+                                placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
+                              />
+                              <Input
+                                value={set.draftReps ?? ""}
+                                inputMode="numeric"
+                                enterKeyHint="done"
+                                autoComplete="off"
+                                pattern="[0-9]*"
+                                onFocus={() =>
+                                  focusSet(exercise.id, set.id, {
+                                    field: "reps",
+                                    restoreDock: true,
+                                  })
+                                }
+                                onChange={(event) =>
+                                  updateDraft(exercise.id, set.id, {
+                                    draftReps: parseNumericInput(event.target.value),
+                                  })
+                                }
+                                className={cn(
+                                  "h-12 rounded-2xl border px-4 text-base font-medium text-white shadow-none transition placeholder:text-zinc-500 focus-visible:ring-0",
+                                  isActive
+                                    ? "border-lime-300/40 bg-lime-300/10"
+                                    : "border-white/10 bg-black/20",
+                                )}
+                                placeholder="Reps"
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -757,30 +896,118 @@ export function ActiveWorkoutClient() {
         </div>
       ) : null}
 
-      <div
-        className="fixed inset-x-0 z-30 mx-auto w-[min(25rem,calc(100%-1.5rem))] px-1"
-        style={{ bottom: `${actionBarBottom}px` }}
-      >
-        <div className="flex items-center gap-3">
-          <Button
-            size="icon-lg"
-            variant="outline"
-            className="size-14 rounded-2xl border-white/10 bg-zinc-950/95 text-white shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] hover:bg-white/[0.06]"
-            onClick={() => setLibraryOpen(true)}
-          >
-            <Plus className="size-5" />
-            <span className="sr-only">Add exercise</span>
-          </Button>
-          <Button
-            size="lg"
-            className="h-14 flex-1 rounded-2xl bg-lime-300 text-base font-semibold text-zinc-950 shadow-[0_24px_70px_-40px_rgba(196,255,57,1)] hover:bg-lime-200 disabled:bg-zinc-800 disabled:text-zinc-500"
-            disabled={!activeSetHasValues}
-            onClick={() => logFocusedSet()}
-          >
-            Log Set
-          </Button>
+      {isKeyboardOpen && activeExercise && activeSet ? (
+        <div
+          className="fixed inset-x-0 z-40 mx-auto w-[min(25rem,calc(100%-1rem))] px-1"
+          style={{ bottom: `${keyboardInset + 8}px` }}
+        >
+          <div className="rounded-[1.65rem] border border-white/10 bg-zinc-950/96 p-3 text-white shadow-[0_24px_70px_-36px_rgba(0,0,0,0.92)] backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-white">{activeExercise.exerciseName}</p>
+                <p className="mt-1 text-[0.68rem] uppercase tracking-[0.22em] text-lime-200/70">
+                  Set {activeSet.setNumber}
+                  {activeSet.previousWeight != null || activeSet.previousReps != null
+                    ? ` / ${activeSet.previousWeight ?? "-"} ${profile.weightUnit} x ${activeSet.previousReps ?? "-"}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  dockLoadInputRef.current?.blur();
+                  dockRepsInputRef.current?.blur();
+                }}
+                className="flex size-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
+              >
+                <X className="size-4" />
+                <span className="sr-only">Dismiss keyboard</span>
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Input
+                ref={dockLoadInputRef}
+                value={activeLoadValue}
+                inputMode={activeExercise.tag === "assisted" ? "numeric" : "decimal"}
+                enterKeyHint="next"
+                autoComplete="off"
+                pattern="[0-9]*[.,]?[0-9]*"
+                onFocus={() => {
+                  dockFieldRef.current = "load";
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    dockRepsInputRef.current?.focus();
+                  }
+                }}
+                onChange={(event) =>
+                  handleActiveSetDraftUpdate("load", event.target.value)
+                }
+                className="h-12 rounded-2xl border-lime-300/40 bg-lime-300/10 px-4 text-base font-medium text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
+                placeholder={activeExercise.tag === "assisted" ? "Assist" : "Weight"}
+              />
+              <Input
+                ref={dockRepsInputRef}
+                value={activeRepsValue}
+                inputMode="numeric"
+                enterKeyHint="done"
+                autoComplete="off"
+                pattern="[0-9]*"
+                onFocus={() => {
+                  dockFieldRef.current = "reps";
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleLogSet();
+                  }
+                }}
+                onChange={(event) =>
+                  handleActiveSetDraftUpdate("reps", event.target.value)
+                }
+                className="h-12 rounded-2xl border-lime-300/40 bg-lime-300/10 px-4 text-base font-medium text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
+                placeholder="Reps"
+              />
+            </div>
+
+            <Button
+              size="lg"
+              className="mt-3 h-12 w-full rounded-2xl bg-lime-300 text-base font-semibold text-zinc-950 shadow-[0_24px_70px_-40px_rgba(196,255,57,1)] hover:bg-lime-200 disabled:bg-zinc-800 disabled:text-zinc-500"
+              disabled={!activeSetHasValues}
+              onClick={handleLogSet}
+            >
+              Log Set
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className="fixed inset-x-0 z-30 mx-auto w-[min(25rem,calc(100%-1.5rem))] px-1"
+          style={{ bottom: `${actionBarBottom}px` }}
+        >
+          <div className="flex items-center gap-3">
+            <Button
+              size="icon-lg"
+              variant="outline"
+              className="size-14 rounded-2xl border-white/10 bg-zinc-950/95 text-white shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] hover:bg-white/[0.06]"
+              onClick={() => setLibraryOpen(true)}
+            >
+              <Plus className="size-5" />
+              <span className="sr-only">Add exercise</span>
+            </Button>
+            <Button
+              size="lg"
+              className="h-14 flex-1 rounded-2xl bg-lime-300 text-base font-semibold text-zinc-950 shadow-[0_24px_70px_-40px_rgba(196,255,57,1)] hover:bg-lime-200 disabled:bg-zinc-800 disabled:text-zinc-500"
+              disabled={!activeSetHasValues}
+              onClick={handleLogSet}
+            >
+              Log Set
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
