@@ -5,7 +5,6 @@ import { Logo } from "@/components/branding/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { setupChecklist } from "@/lib/env";
 
 const featureCards = [
   {
@@ -27,6 +26,12 @@ const featureCards = [
     icon: ShieldCheck,
   },
 ];
+
+const launchHighlights = [
+  "Email/password accounts with protected app routes",
+  "Clean first-run state with no sample workouts or seeded fake history",
+  "Mobile-first logging, routines, analytics, and exercise browsing in one flow",
+] as const;
 
 export function LandingPage() {
   return (
@@ -68,37 +73,30 @@ export function LandingPage() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                  <Link href="/app">Open the current build</Link>
+                  <Link href="/app">Open app</Link>
                 </Button>
               </div>
             </div>
 
             <Card className="border-white/10 bg-white/5 text-white backdrop-blur">
               <CardHeader>
-                <CardTitle>Autonomous setup status</CardTitle>
+                <CardTitle>Built for launch</CardTitle>
                 <CardDescription className="text-zinc-300">
-                  The repo has already been published to GitHub and linked to Vercel.
+                  Kinetic opens like a product now, not an internal preview build.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {setupChecklist.map((item) => (
+                {launchHighlights.map((item) => (
                   <div
-                    key={item.label}
+                    key={item}
                     className="rounded-2xl border border-white/8 bg-black/20 p-3"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-white">{item.label}</p>
-                      <Badge
-                        className={
-                          item.done
-                            ? "border border-lime-300/20 bg-lime-300/10 text-lime-100"
-                            : "border border-amber-400/20 bg-amber-400/10 text-amber-100"
-                        }
-                      >
-                        {item.done ? "Ready" : "Needs input"}
+                    <div className="flex items-start gap-3">
+                      <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-100">
+                        Ready
                       </Badge>
+                      <p className="text-sm text-zinc-300">{item}</p>
                     </div>
-                    <p className="mt-2 text-sm text-zinc-400">{item.detail}</p>
                   </div>
                 ))}
               </CardContent>

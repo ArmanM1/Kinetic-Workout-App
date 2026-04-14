@@ -18,10 +18,24 @@ import {
   startWorkoutFromSplitDay,
 } from "@/lib/domain/workout";
 import { builtInExercises, findExerciseByName } from "@/lib/data/catalog";
-import { createInitialStoreState } from "@/lib/data/mock";
+import {
+  createInitialStoreState,
+  mockProfile,
+  recentHistory,
+} from "@/lib/data/mock";
+
+function createHistoricalState() {
+  const state = createInitialStoreState();
+
+  return {
+    ...state,
+    profile: mockProfile,
+    history: recentHistory,
+  };
+}
 
 test("previous-value autofill uses most recent completed set", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const session = startBlankWorkout(state.settings);
   const exercise = findExerciseByName("Barbell Bench Press - Medium Grip");
 
@@ -61,14 +75,14 @@ test("estimated 1RM uses the epley formula", () => {
 });
 
 test("volume calculations include recent history", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const volume = getSessionVolume(state.history[0], state.profile);
 
   assert.ok(volume > 0);
 });
 
 test("streak calculations count current and longest runs", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const streaks = calculateCurrentAndLongestStreak(state.history);
 
   assert.ok(streaks.current >= 1);
@@ -101,7 +115,7 @@ test("one-active-workout behavior is preserved at the store-model level", () => 
 });
 
 test("dashboard stats report logged sessions and total volume", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const stats = buildDashboardStats(state.history, state.profile);
 
   assert.equal(stats[0].value, String(state.history.length));
@@ -109,7 +123,7 @@ test("dashboard stats report logged sessions and total volume", () => {
 });
 
 test("exercise estimated 1RM uses the best logged set", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const estimated = calculateExerciseEstimatedOneRepMax(
     state.history[0].exercises[0],
     state.profile.bodyWeight,
@@ -119,7 +133,7 @@ test("exercise estimated 1RM uses the best logged set", () => {
 });
 
 test("body region analytics summarize volume and ranked lifts", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const analytics = buildBodyRegionAnalytics(
     state.history,
     state.profile,
@@ -133,7 +147,7 @@ test("body region analytics summarize volume and ranked lifts", () => {
 });
 
 test("logged exercise options expose all tracked exercises", () => {
-  const state = createInitialStoreState();
+  const state = createHistoricalState();
   const options = buildLoggedExerciseOptions(state.history);
 
   assert.ok(options.length >= 3);

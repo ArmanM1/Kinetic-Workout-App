@@ -9,7 +9,11 @@ import {
 } from "react";
 
 import { builtInExercises } from "@/lib/data/catalog";
-import { createInitialStoreState } from "@/lib/data/mock";
+import {
+  createInitialStoreState,
+  isSeededDemoState,
+  syncStoreProfileIdentity,
+} from "@/lib/data/mock";
 import {
   addExerciseToSession,
   addSetToExercise,
@@ -22,7 +26,7 @@ import {
   startWorkoutFromSplitDay,
   updateSetDraft,
 } from "@/lib/domain/workout";
-import { isSupabaseConfigured } from "@/lib/env";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type {
   ExerciseCatalogItem,
   KineticStoreState,
@@ -31,14 +35,14 @@ import type {
   WorkoutSplit,
 } from "@/types/kinetic";
 
-const STORAGE_KEY = "kinetic-store-v1";
+const STORAGE_KEY = "kinetic-store-v2";
+const LEGACY_STORAGE_KEY = "kinetic-store-v1";
 
 type WorkoutContextValue = KineticStoreState & {
   catalog: ExerciseCatalogItem[];
   hydrated: boolean;
   defaultSplit: WorkoutSplit | null;
   recentExerciseSlugs: string[];
-  isSupabaseReady: boolean;
   startBlankSession: () => void;
   startSplitDaySession: (splitId: string, dayId: string) => void;
   addExercise: (exerciseSlug: string) => void;
@@ -59,6 +63,7 @@ type WorkoutContextValue = KineticStoreState & {
   toggleArchive: (exerciseSlug: string) => void;
   updateSettings: (patch: Partial<UserSettings>) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
+  completeOnboarding: (bodyWeight: number | null) => void;
   createSplit: (name: string, focus: string) => void;
   createCustomExercise: (exercise: Pick<ExerciseCatalogItem, "name" | "equipment"> & {
     primaryMuscles: string[];
@@ -80,7 +85,9 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_STORAGE_KEY);
 
     if (!raw) {
       setHydrated(true);
@@ -90,9 +97,17 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     startTransition(() => {
       try {
         const parsed = JSON.parse(raw) as KineticStoreState;
-        setStore(parsed);
+        setStore(
+          isSeededDemoState(parsed)
+            ? createInitialStoreState()
+            : {
+                ...parsed,
+                hasCompletedOnboarding: parsed.hasCompletedOnboarding ?? true,
+              },
+        );
       } catch {
         window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
       } finally {
         setHydrated(true);
       }
@@ -105,7 +120,49 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
   }, [hydrated, store]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      return;
+    }
+
+    let cancelled = false;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled || !data.user) {
+        return;
+      }
+
+      startTransition(() => {
+        setStore((current) => syncStoreProfileIdentity(current, data.user));
+      });
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        return;
+      }
+
+      startTransition(() => {
+        setStore((current) => syncStoreProfileIdentity(current, session.user));
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [hydrated]);
 
   const catalog = [...builtInExercises, ...store.customExercises];
   const defaultSplit = store.splits.find((split) => split.isDefault) ?? null;
@@ -123,7 +180,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     hydrated,
     defaultSplit,
     recentExerciseSlugs,
-    isSupabaseReady: isSupabaseConfigured,
     startBlankSession() {
       setStore((current) => ({
         ...current,
@@ -327,6 +383,16 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           ...current.profile,
           ...patch,
         },
+      }));
+    },
+    completeOnboarding(bodyWeight) {
+      setStore((current) => ({
+        ...current,
+        profile: {
+          ...current.profile,
+          bodyWeight,
+        },
+        hasCompletedOnboarding: true,
       }));
     },
     createSplit(name, focus) {

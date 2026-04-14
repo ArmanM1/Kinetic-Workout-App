@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app/app-shell";
-import { isSupabaseConfigured } from "@/lib/env";
 import { getServerSessionUser } from "@/lib/supabase/server";
 
 export default async function AuthenticatedAppLayout({
@@ -11,9 +10,9 @@ export default async function AuthenticatedAppLayout({
 }) {
   const user = await getServerSessionUser();
 
-  if (isSupabaseConfigured && !user) {
+  if (!user) {
     redirect("/auth/login");
   }
 
-  return <AppShell isDemoMode={!isSupabaseConfigured}>{children}</AppShell>;
+  return <AppShell>{children}</AppShell>;
 }

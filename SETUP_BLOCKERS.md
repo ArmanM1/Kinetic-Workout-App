@@ -11,8 +11,8 @@ codex mcp login supabase
 pnpm dlx supabase login
 ```
 
-- Result: the Codex MCP connection is now working, and the local `supabase/config.toml` already has `enable_confirmations = false`, but the standalone Supabase CLI still cannot authenticate in this non-interactive shell without a token.
-- Manual action needed: either set `SUPABASE_ACCESS_TOKEN` on this machine and rerun `pnpm dlx supabase config push --project-ref ohiqtpvbhzifhwujohos`, or turn off email confirmations directly in the Supabase dashboard for project `ohiqtpvbhzifhwujohos`.
+- Result: the Codex MCP connection is now working, and the local `supabase/config.toml` already has `enable_confirmations = false`, but the hosted project still returns the email-confirmation path for new signups because the standalone Supabase CLI cannot authenticate in this non-interactive shell without a token.
+- Manual action needed: either set `SUPABASE_ACCESS_TOKEN` on this machine and rerun `pnpm dlx supabase config push --project-ref ohiqtpvbhzifhwujohos`, or turn off email confirmations directly in the Supabase dashboard for project `ohiqtpvbhzifhwujohos`. Until that happens, brand-new accounts must confirm email before the first in-app onboarding flow begins.
 
 ## Vercel preview access for non-authenticated reviewers
 

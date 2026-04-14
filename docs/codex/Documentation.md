@@ -23,6 +23,9 @@
 - Switched workout logging to numeric mobile keyboards and a docked active-set editor that keeps other sets visible while `Log Set` advances focus through unfinished work
 - Connected Codex to the Supabase MCP server and verified that the remaining hosted auth blocker is the standalone Supabase CLI token step
 - Updated signup to surface a clear message when hosted Supabase still requires email confirmation
+- Removed the old seeded demo-mode fallback so fresh sessions now start from a clean signed-in state instead of sample profile/history data
+- Added a skippable first-run onboarding flow that captures body weight and walks new users through Home, Exercises, Analytics, and the iPhone home-screen install path
+- Verified the onboarding flow in a fresh mobile browser session, including persisted body weight in Settings and no remaining demo banner/setup checklist in the app shell
 - Verified `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`
 - Published a ready preview deployment at `https://project-afpcu-hndbixlv0-armans-projects.vercel.app`
 - Verified the healthy production deployment at `https://project-afpcu.vercel.app`

@@ -1,3 +1,5 @@
+import type { User } from "@supabase/supabase-js";
+
 import { findExerciseByName } from "@/lib/data/catalog";
 import type {
   BodyMetricEntry,
@@ -60,7 +62,7 @@ export const defaultSettings: UserSettings = {
   weightUnit: "lb",
   restTimerEnabled: true,
   restTimerSeconds: 105,
-  donationUrl: "https://buymeacoffee.com/kinetic",
+  donationUrl: "",
   favoriteExerciseSlugs: [],
   archivedExerciseSlugs: [],
 };
@@ -461,21 +463,88 @@ export const recentHistory: CompletedWorkoutSession[] = [
   },
 ];
 
-export function createInitialStoreState(): KineticStoreState {
+function toDisplayName(user?: Pick<User, "email" | "user_metadata">) {
+  const metadataName =
+    typeof user?.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : typeof user?.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : typeof user?.user_metadata?.name === "string"
+          ? user.user_metadata.name
+          : "";
+
+  if (metadataName.trim()) {
+    return metadataName.trim();
+  }
+
+  const emailPrefix = user?.email?.split("@")[0]?.trim() ?? "";
+
+  if (!emailPrefix) {
+    return "";
+  }
+
+  return emailPrefix
+    .replace(/[._-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(" ");
+}
+
+export function isSeededDemoState(store: KineticStoreState) {
+  return (
+    store.profile.id === "profile-demo" ||
+    store.profile.email === "demo@kinetic.app"
+  );
+}
+
+export function syncStoreProfileIdentity(
+  store: KineticStoreState,
+  user: Pick<User, "id" | "email" | "user_metadata">,
+): KineticStoreState {
+  if (
+    store.profile.id &&
+    store.profile.id !== "profile-local" &&
+    store.profile.id !== "profile-demo" &&
+    store.profile.id !== user.id
+  ) {
+    return createInitialStoreState(user);
+  }
+
+  const displayName = store.profile.displayName.trim() || toDisplayName(user);
+
   return {
-    profile: mockProfile,
-    bodyMetrics: mockBodyMetrics,
+    ...store,
+    profile: {
+      ...store.profile,
+      id: user.id,
+      email: user.email ?? store.profile.email,
+      displayName,
+    },
+  };
+}
+
+export function createInitialStoreState(
+  user?: Pick<User, "id" | "email" | "user_metadata">,
+): KineticStoreState {
+  return {
+    profile: {
+      id: user?.id ?? "profile-local",
+      email: user?.email ?? "",
+      displayName: toDisplayName(user),
+      gender: null,
+      weightUnit: "lb",
+      bodyWeight: null,
+      donationUrl: "",
+    },
+    bodyMetrics: [],
     settings: {
       ...defaultSettings,
-      favoriteExerciseSlugs: [
-        benchPress?.slug ?? catalogFallback[0].slug,
-        latPulldown?.slug ?? catalogFallback[3].slug,
-        squat?.slug ?? catalogFallback[6].slug,
-      ],
     },
     splits: workoutSplits,
-    customExercises,
-    history: recentHistory,
+    customExercises: [],
+    history: [],
     activeSession: null,
+    hasCompletedOnboarding: false,
   };
 }

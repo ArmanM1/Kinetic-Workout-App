@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Play, Plus } from "lucide-react";
 
+import { OnboardingFlow } from "@/components/app/onboarding-flow";
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,11 +29,15 @@ export function HomeDashboard() {
   const router = useRouter();
   const {
     activeSession,
+    completeOnboarding,
     defaultSplit,
+    hasCompletedOnboarding,
+    hydrated,
     splits,
     profile,
     startBlankSession,
   } = useWorkoutStore();
+  const [dismissedProfileId, setDismissedProfileId] = useState<string | null>(null);
 
   const today = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
@@ -61,10 +67,36 @@ export function HomeDashboard() {
     .slice(0, 2);
 
   const primaryRoutineHref = primaryRoutine ? `/app/splits/${toSplitSlug(primaryRoutine.name)}` : "/app/splits";
+  const shouldShowOnboarding =
+    hydrated &&
+    !activeSession &&
+    !hasCompletedOnboarding &&
+    dismissedProfileId !== profile.id;
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-4 rounded-[2rem] border border-white/6 bg-white/[0.03] p-5 shadow-[0_30px_80px_-45px_rgba(0,0,0,0.9)]">
+    <>
+      <OnboardingFlow
+        key={profile.id}
+        open={shouldShowOnboarding}
+        displayName={profile.displayName}
+        initialWeight={profile.bodyWeight}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDismissedProfileId(profile.id);
+          }
+        }}
+        onSkip={() => {
+          completeOnboarding(profile.bodyWeight);
+          setDismissedProfileId(profile.id);
+        }}
+        onComplete={(bodyWeight) => {
+          completeOnboarding(bodyWeight);
+          setDismissedProfileId(profile.id);
+        }}
+      />
+
+      <div className="space-y-6">
+        <section className="space-y-4 rounded-[2rem] border border-white/6 bg-white/[0.03] p-5 shadow-[0_30px_80px_-45px_rgba(0,0,0,0.9)]">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-zinc-500">
@@ -120,9 +152,9 @@ export function HomeDashboard() {
             <p className="mt-2 text-xs uppercase tracking-[0.22em] text-zinc-500">Routines</p>
           </Link>
         </div>
-      </section>
+        </section>
 
-      <section className="space-y-3">
+        <section className="space-y-3">
         <div className="flex items-center justify-between gap-3 px-1">
           <h2 className="text-2xl font-semibold tracking-tight text-white">My Routines</h2>
           <Button asChild variant="ghost" size="sm" className="text-lime-200 hover:text-lime-100">
@@ -194,7 +226,8 @@ export function HomeDashboard() {
             ))}
           </div>
         ) : null}
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }

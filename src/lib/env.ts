@@ -21,32 +21,6 @@ export const isSupabaseConfigured = Boolean(
   env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 );
 
-export const setupChecklist = [
-  {
-    label: "GitHub publishing",
-    done: true,
-    detail: "The local repo is already connected to ArmanM1/Kinetic-Workout-App.",
-  },
-  {
-    label: "Vercel linking",
-    done: true,
-    detail: "The workspace is linked to project-afpcu and Vercel CLI is authenticated.",
-  },
-  {
-    label: "Supabase publishable keys",
-    done: isSupabaseConfigured,
-    detail: isSupabaseConfigured
-      ? "Supabase environment variables are available to the app."
-      : "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to enable auth and data sync.",
-  },
-  {
-    label: "Codex MCP CLI",
-    done: false,
-    detail:
-      "The desktop-installed codex.exe is present but currently fails with `Access is denied` when launched from PowerShell.",
-  },
-] as const;
-
 export const missingSupabaseEnv = [
   env.NEXT_PUBLIC_SUPABASE_URL ? null : "NEXT_PUBLIC_SUPABASE_URL",
   env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY

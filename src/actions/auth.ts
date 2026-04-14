@@ -71,7 +71,7 @@ export async function signUpAction(formData: FormData) {
   if (!data.session) {
     withMessage(
       "/auth/login",
-      "Account created. If you still see an email confirmation step, the hosted Supabase project still needs confirmations turned off.",
+      "Account created. Confirm your email, then log in to finish your quick setup inside Kinetic.",
     );
   }
 

@@ -6,10 +6,22 @@ import { signOutAction } from "@/actions/auth";
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 export function SettingsPanel() {
@@ -22,7 +34,7 @@ export function SettingsPanel() {
     updateProfile,
     updateSettings,
   } = useWorkoutStore();
-  const [resetLabel, setResetLabel] = useState("Reset all user data");
+  const [resetLabel, setResetLabel] = useState("Reset app data on this device");
 
   function exportData() {
     const payload = {
@@ -51,7 +63,7 @@ export function SettingsPanel() {
         <CardHeader>
           <CardTitle>Profile and recovery</CardTitle>
           <CardDescription className="text-zinc-300">
-            Weight units, bodyweight, and rest timing feed the app’s assisted-load and recovery
+            Weight units, bodyweight, and rest timing feed the app&apos;s assisted-load and recovery
             behavior.
           </CardDescription>
         </CardHeader>
@@ -141,8 +153,7 @@ export function SettingsPanel() {
         <CardHeader>
           <CardTitle>Safety and export</CardTitle>
           <CardDescription className="text-zinc-300">
-            Export your data, sign out, or clear the local demo state while env wiring is still in
-            progress.
+            Export your data, sign out, or clear the local app data saved on this device.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -153,12 +164,15 @@ export function SettingsPanel() {
                 Email/password
               </Badge>
               <Badge className="border border-white/10 bg-white/5 text-zinc-300">
-                Anonymous auth disabled
+                Local-first workout data
               </Badge>
             </div>
           </div>
 
-          <Button className="w-full bg-lime-300 text-zinc-950 hover:bg-lime-200" onClick={exportData}>
+          <Button
+            className="w-full bg-lime-300 text-zinc-950 hover:bg-lime-200"
+            onClick={exportData}
+          >
             Export data
           </Button>
 
@@ -166,8 +180,9 @@ export function SettingsPanel() {
             variant="outline"
             className="w-full"
             onClick={() => {
+              localStorage.removeItem("kinetic-store-v2");
               localStorage.removeItem("kinetic-store-v1");
-              setResetLabel("Local data cleared — refresh to reseed demo state");
+              setResetLabel("Local data cleared - refresh to start fresh");
             }}
           >
             {resetLabel}

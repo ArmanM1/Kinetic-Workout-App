@@ -32,10 +32,8 @@ import { cn } from "@/lib/utils";
 
 export function AppShell({
   children,
-  isDemoMode,
 }: {
   children: React.ReactNode;
-  isDemoMode: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -118,14 +116,6 @@ export function AppShell({
           </div>
         </div>
       </header>
-
-      {isDemoMode ? (
-        <div className="px-4 pb-2">
-          <div className="mx-auto w-full max-w-[27rem] rounded-2xl border border-amber-400/15 bg-amber-400/8 px-4 py-3 text-sm text-amber-100/90">
-            Running in demo mode until live Supabase keys are attached.
-          </div>
-        </div>
-      ) : null}
 
       <main
         className={cn(

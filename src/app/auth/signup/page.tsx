@@ -27,8 +27,8 @@ export default async function SignupPage({
               </Badge>
               <CardTitle as="h1" className="text-3xl">Create your Kinetic account</CardTitle>
               <CardDescription className="text-zinc-300">
-                Set up email/password access, then head straight into onboarding, home, and fast
-                workout logging.
+                Set up email/password access, then finish a short setup flow before jumping into
+                home and fast workout logging.
               </CardDescription>
             </div>
           </CardHeader>
@@ -38,7 +38,7 @@ export default async function SignupPage({
           <CardHeader>
             <CardTitle as="h2">Sign up</CardTitle>
             <CardDescription className="text-zinc-300">
-              One clean signup and you are straight into the app.
+              Quick signup, then a skippable setup once you enter the app.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

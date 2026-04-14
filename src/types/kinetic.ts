@@ -144,6 +144,7 @@ export type KineticStoreState = {
   customExercises: ExerciseCatalogItem[];
   history: CompletedWorkoutSession[];
   activeSession: ActiveWorkoutSession | null;
+  hasCompletedOnboarding: boolean;
 };
 
 export type RawExerciseRecord = {
