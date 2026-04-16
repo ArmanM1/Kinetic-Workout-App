@@ -78,6 +78,7 @@ export function SplitDetail({ slug }: { slug: string }) {
                       router.push("/app/active-workout");
                     }, day.name)
                   }
+                  aria-label={`Start ${day.name} workout`}
                   className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950 transition hover:bg-lime-200"
                 >
                   <Play className="size-5 fill-current" />
