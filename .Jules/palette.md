@@ -1,0 +1,1 @@
+## 2026-04-19 - Icon Button Accessibility\n**Learning:** Discovered icon-only Play button in split-detail missing accessible name.\n**Action:** Add sr-only span or aria-label to all icon-only buttons to ensure screen reader users understand the action.
