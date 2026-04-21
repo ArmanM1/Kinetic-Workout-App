@@ -16,6 +16,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const muscleTagOptions = [
+  "Chest",
+  "Lats",
+  "Middle Back",
+  "Lower Back",
+  "Shoulders",
+  "Biceps",
+  "Triceps",
+  "Forearms",
+  "Quadriceps",
+  "Hamstrings",
+  "Glutes",
+  "Calves",
+  "Abdominals",
+  "Obliques",
+  "Traps",
+];
+
 function toCustomExerciseSlug(value: string) {
   return value
     .toLowerCase()
@@ -40,22 +58,49 @@ export function CustomExerciseDialog({
   const [open, setOpen] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customEquipment, setCustomEquipment] = useState("");
-  const [customPrimaryMuscles, setCustomPrimaryMuscles] = useState("");
+  const [customPrimaryMuscles, setCustomPrimaryMuscles] = useState<string[]>([]);
+  const [customSecondaryMuscles, setCustomSecondaryMuscles] = useState<string[]>([]);
 
   function resetForm() {
     setCustomName("");
     setCustomEquipment("");
-    setCustomPrimaryMuscles("");
+    setCustomPrimaryMuscles([]);
+    setCustomSecondaryMuscles([]);
+  }
+
+  function togglePrimaryMuscle(muscle: string) {
+    setCustomPrimaryMuscles((current) => {
+      if (current.includes(muscle)) {
+        return current.filter((entry) => entry !== muscle);
+      }
+
+      return [...current, muscle];
+    });
+
+    setCustomSecondaryMuscles((current) =>
+      current.filter((entry) => entry !== muscle),
+    );
+  }
+
+  function toggleSecondaryMuscle(muscle: string) {
+    setCustomSecondaryMuscles((current) => {
+      if (current.includes(muscle)) {
+        return current.filter((entry) => entry !== muscle);
+      }
+
+      return [...current, muscle];
+    });
+
+    setCustomPrimaryMuscles((current) =>
+      current.filter((entry) => entry !== muscle),
+    );
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedName = customName.trim();
-    const primaryMuscles = customPrimaryMuscles
-      .split(",")
-      .map((token) => token.trim())
-      .filter(Boolean);
+    const primaryMuscles = customPrimaryMuscles;
 
     if (!trimmedName || primaryMuscles.length === 0) {
       return;
@@ -65,6 +110,7 @@ export function CustomExerciseDialog({
       name: trimmedName,
       equipment: customEquipment.trim() || "custom",
       primaryMuscles,
+      secondaryMuscles: customSecondaryMuscles,
     });
 
     const created = {
@@ -129,13 +175,50 @@ export function CustomExerciseDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="custom-exercise-muscles">Primary muscles</Label>
-            <Input
+            <div
               id="custom-exercise-muscles"
-              value={customPrimaryMuscles}
-              onChange={(event) => setCustomPrimaryMuscles(event.target.value)}
-              placeholder="Abs, Obliques"
-              className="h-11 rounded-2xl border-white/10 bg-white/[0.03] px-4 text-white"
-            />
+              className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+            >
+              {muscleTagOptions.map((muscle) => (
+                <button
+                  key={muscle}
+                  type="button"
+                  onClick={() => togglePrimaryMuscle(muscle)}
+                  className={`rounded-full border px-3 py-1 text-sm transition ${
+                    customPrimaryMuscles.includes(muscle)
+                      ? "border-lime-300/20 bg-lime-300/10 text-lime-200"
+                      : "border-white/10 bg-black/20 text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  {muscle}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-400">
+              Choose at least one primary muscle so volume maps to the right region.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="custom-exercise-secondary-muscles">Secondary muscles</Label>
+            <div
+              id="custom-exercise-secondary-muscles"
+              className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+            >
+              {muscleTagOptions.map((muscle) => (
+                <button
+                  key={`secondary-${muscle}`}
+                  type="button"
+                  onClick={() => toggleSecondaryMuscle(muscle)}
+                  className={`rounded-full border px-3 py-1 text-sm transition ${
+                    customSecondaryMuscles.includes(muscle)
+                      ? "border-cyan-300/25 bg-cyan-300/10 text-cyan-200"
+                      : "border-white/10 bg-black/20 text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  {muscle}
+                </button>
+              ))}
+            </div>
           </div>
           <Button className="h-11 w-full rounded-2xl bg-lime-300 text-zinc-950 hover:bg-lime-200">
             Save exercise

@@ -51,11 +51,13 @@ import type { ExerciseCatalogItem } from "@/types/kinetic";
 import { cn } from "@/lib/utils";
 
 function parseNumericInput(value: string) {
-  if (value.trim() === "") {
+  const normalized = value.trim().replace(",", ".");
+
+  if (normalized === "") {
     return null;
   }
 
-  const numeric = Number(value);
+  const numeric = Number(normalized);
 
   return Number.isNaN(numeric) ? null : numeric;
 }

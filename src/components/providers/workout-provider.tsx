@@ -5,6 +5,7 @@ import {
   startTransition,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -67,11 +68,31 @@ type WorkoutContextValue = KineticStoreState & {
   createSplit: (name: string, focus: string) => void;
   createCustomExercise: (exercise: Pick<ExerciseCatalogItem, "name" | "equipment"> & {
     primaryMuscles: string[];
+    secondaryMuscles?: string[];
     instructions?: string[];
   }) => void;
 };
 
 const WorkoutContext = createContext<WorkoutContextValue | null>(null);
+
+function parseStoreState(raw: string | null) {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as KineticStoreState;
+
+    return isSeededDemoState(parsed)
+      ? createInitialStoreState()
+      : {
+          ...parsed,
+          hasCompletedOnboarding: parsed.hasCompletedOnboarding ?? true,
+        };
+  } catch {
+    return null;
+  }
+}
 
 function createSlug(value: string) {
   return value
@@ -83,6 +104,13 @@ function createSlug(value: string) {
 export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [store, setStore] = useState<KineticStoreState>(createInitialStoreState());
   const [hydrated, setHydrated] = useState(false);
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
+  const [isRemoteHydrated, setIsRemoteHydrated] = useState(false);
+  const lastSyncedStateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    lastSyncedStateRef.current = null;
+  }, [activeUserId]);
 
   useEffect(() => {
     const raw =
@@ -90,27 +118,23 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.getItem(LEGACY_STORAGE_KEY);
 
     if (!raw) {
-      setHydrated(true);
+      startTransition(() => {
+        setHydrated(true);
+      });
       return;
     }
 
     startTransition(() => {
-      try {
-        const parsed = JSON.parse(raw) as KineticStoreState;
-        setStore(
-          isSeededDemoState(parsed)
-            ? createInitialStoreState()
-            : {
-                ...parsed,
-                hasCompletedOnboarding: parsed.hasCompletedOnboarding ?? true,
-              },
-        );
-      } catch {
+      const parsed = parseStoreState(raw);
+
+      if (parsed) {
+        setStore(parsed);
+      } else {
         window.localStorage.removeItem(STORAGE_KEY);
         window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-      } finally {
-        setHydrated(true);
       }
+
+      setHydrated(true);
     });
   }, []);
 
@@ -137,10 +161,17 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     supabase.auth.getUser().then(({ data }) => {
-      if (cancelled || !data.user) {
+      if (cancelled) {
         return;
       }
 
+      if (!data.user) {
+        setActiveUserId(null);
+        setIsRemoteHydrated(true);
+        return;
+      }
+
+      setActiveUserId(data.user.id);
       startTransition(() => {
         setStore((current) => syncStoreProfileIdentity(current, data.user));
       });
@@ -150,9 +181,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
+        setActiveUserId(null);
+        setIsRemoteHydrated(true);
         return;
       }
 
+      setActiveUserId(session.user.id);
       startTransition(() => {
         setStore((current) => syncStoreProfileIdentity(current, session.user));
       });
@@ -163,6 +197,79 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !activeUserId) {
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      startTransition(() => {
+        setIsRemoteHydrated(true);
+      });
+      return;
+    }
+
+    let cancelled = false;
+    startTransition(() => {
+      setIsRemoteHydrated(false);
+    });
+
+    supabase
+      .from("user_workout_state")
+      .select("state")
+      .eq("user_id", activeUserId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (!error && data?.state) {
+          const parsed = parseStoreState(JSON.stringify(data.state));
+
+          if (parsed) {
+            startTransition(() => {
+              setStore(parsed);
+            });
+            lastSyncedStateRef.current = JSON.stringify(parsed);
+          }
+        }
+
+        setIsRemoteHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUserId, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !activeUserId || !isRemoteHydrated) {
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      return;
+    }
+
+    const serialized = JSON.stringify(store);
+
+    if (lastSyncedStateRef.current === serialized) {
+      return;
+    }
+
+    lastSyncedStateRef.current = serialized;
+
+    supabase.from("user_workout_state").upsert({
+      user_id: activeUserId,
+      state: store,
+    });
+  }, [activeUserId, hydrated, isRemoteHydrated, store]);
 
   const catalog = [...builtInExercises, ...store.customExercises];
   const defaultSplit = store.splits.find((split) => split.isDefault) ?? null;
@@ -442,7 +549,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             equipment: exercise.equipment ?? "custom",
             category: "strength",
             primaryMuscles: exercise.primaryMuscles,
-            secondaryMuscles: [],
+            secondaryMuscles: exercise.secondaryMuscles ?? [],
             instructions:
               exercise.instructions ?? [
                 "Add your own notes to keep this movement searchable and reusable.",
