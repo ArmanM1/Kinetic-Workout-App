@@ -389,6 +389,7 @@ export function ActiveWorkoutClient() {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
                 placeholder="Search exercises..."
+                aria-label="Search exercises"
               />
             </div>
             <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -578,6 +579,7 @@ export function ActiveWorkoutClient() {
                   }
                   placeholder="Blank Workout"
                   className="mt-3 h-auto border-0 bg-transparent p-0 text-4xl font-semibold tracking-tight text-white shadow-none placeholder:text-white focus-visible:ring-0"
+                  aria-label="Workout title"
                 />
               ) : (
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">{workoutTitle}</h1>
@@ -737,6 +739,7 @@ export function ActiveWorkoutClient() {
                             <div className="flex items-center gap-3">
                             <button
                                 type="button"
+                                aria-label={`Select set ${set.setNumber}`}
                                 className={cn(
                                   "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
                                   isActive
@@ -847,6 +850,7 @@ export function ActiveWorkoutClient() {
                                     : "border-white/10 bg-black/20",
                                 )}
                                 placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
+                                aria-label={`${exercise.tag === "assisted" ? "Assist amount" : "Weight"} for set ${set.setNumber}`}
                               />
                               <Input
                                 value={set.draftReps ?? ""}
@@ -871,6 +875,7 @@ export function ActiveWorkoutClient() {
                                     : "border-white/10 bg-black/20",
                                 )}
                                 placeholder="Reps"
+                                aria-label={`Reps for set ${set.setNumber}`}
                               />
                             </div>
                           )}
@@ -982,6 +987,7 @@ export function ActiveWorkoutClient() {
                 }
                 className="h-12 rounded-2xl border-lime-300/40 bg-lime-300/10 px-4 text-base font-medium text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
                 placeholder={activeExercise.tag === "assisted" ? "Assist" : "Weight"}
+                aria-label={activeExercise.tag === "assisted" ? "Assist amount" : "Weight"}
               />
               <Input
                 ref={dockRepsInputRef}
@@ -1004,6 +1010,7 @@ export function ActiveWorkoutClient() {
                 }
                 className="h-12 rounded-2xl border-lime-300/40 bg-lime-300/10 px-4 text-base font-medium text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
                 placeholder="Reps"
+                aria-label="Reps"
               />
             </div>
 
