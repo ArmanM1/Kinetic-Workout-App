@@ -1,0 +1,1 @@
+## 2026-04-30 - Native Search Keyboard\n**Learning:** Using `type="search"` on search inputs is an easy, native way to improve mobile UX (specifically triggering the 'Search' key on iOS keyboards).\n**Action:** Always verify search inputs have `type="search"` set for mobile-first apps.
