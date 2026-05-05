@@ -385,6 +385,8 @@ export function ActiveWorkoutClient() {
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
+                type="search"
+                aria-label="Search exercises"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
