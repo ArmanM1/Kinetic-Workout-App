@@ -1,0 +1,3 @@
+## 2026-05-11 - iOS Search Keyboard & ARIA Labels
+**Learning:** Using `type="search"` on search inputs triggers the native 'Search' key on iOS keyboards, which is a significant mobile UX improvement. Additionally, utility inputs like load and reps often lack visible label components and rely only on placeholders. Without explicit `aria-label` attributes, these inputs are inaccessible to screen readers.
+**Action:** Always use `type="search"` for search fields. For generic or utility inputs in complex forms (like workout trackers) that don't have a direct `<Label>` component, ensure an `aria-label` is always provided for accessibility.
