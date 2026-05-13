@@ -251,8 +251,8 @@ export function updateSetDraft(
 
 export function selectActiveSet(
   session: ActiveWorkoutSession,
-  exerciseId: string,
-  setId: string,
+  exerciseId: string | null,
+  setId: string | null,
 ) {
   return {
     ...session,
@@ -399,6 +399,7 @@ export function logActiveSet(
 export function finishWorkout(
   session: ActiveWorkoutSession,
   notes: string,
+  title?: string,
 ): CompletedWorkoutSession {
   const completedExercises = session.exercises
     .map((exercise) => ({
@@ -409,6 +410,7 @@ export function finishWorkout(
 
   return {
     ...session,
+    title: title?.trim() || session.title.trim() || "Blank Workout",
     notes,
     exercises: completedExercises,
     activeExerciseId: null,

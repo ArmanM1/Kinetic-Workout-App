@@ -54,13 +54,14 @@ type WorkoutContextValue = KineticStoreState & {
     patch: { draftWeight?: number | null; draftReps?: number | null; assistAmount?: number | null },
   ) => void;
   selectSet: (exerciseId: string, setId: string) => void;
+  clearSelectedSet: () => void;
   logFocusedSet: () => void;
   addSet: (exerciseId: string) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   removeExercise: (exerciseId: string) => void;
   moveExercise: (fromIndex: number, toIndex: number) => void;
   updateActiveSessionTitle: (title: string) => void;
-  finishActiveSession: (notes: string) => void;
+  finishActiveSession: (notes: string, title?: string) => void;
   clearActiveSession: () => void;
   toggleFavorite: (exerciseSlug: string) => void;
   toggleArchive: (exerciseSlug: string) => void;
@@ -358,6 +359,18 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         };
       });
     },
+    clearSelectedSet() {
+      setStore((current) => {
+        if (!current.activeSession) {
+          return current;
+        }
+
+        return {
+          ...current,
+          activeSession: selectActiveSet(current.activeSession, null, null),
+        };
+      });
+    },
     logFocusedSet() {
       setStore((current) => {
         if (!current.activeSession) {
@@ -437,13 +450,13 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         };
       });
     },
-    finishActiveSession(notes) {
+    finishActiveSession(notes, title) {
       setStore((current) => {
         if (!current.activeSession) {
           return current;
         }
 
-        const completed = finishWorkout(current.activeSession, notes);
+        const completed = finishWorkout(current.activeSession, notes, title);
 
         return {
           ...current,
