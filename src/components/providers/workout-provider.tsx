@@ -22,6 +22,7 @@ import {
   finishWorkout,
   logActiveSet,
   moveSessionExercise,
+  removeSessionExercise,
   selectActiveSet,
   startBlankWorkout,
   startWorkoutFromSplitDay,
@@ -56,6 +57,7 @@ type WorkoutContextValue = KineticStoreState & {
   logFocusedSet: () => void;
   addSet: (exerciseId: string) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
+  removeExercise: (exerciseId: string) => void;
   moveExercise: (fromIndex: number, toIndex: number) => void;
   updateActiveSessionTitle: (title: string) => void;
   finishActiveSession: (notes: string) => void;
@@ -393,6 +395,18 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         return {
           ...current,
           activeSession: deleteSetFromExercise(current.activeSession, exerciseId, setId),
+        };
+      });
+    },
+    removeExercise(exerciseId) {
+      setStore((current) => {
+        if (!current.activeSession) {
+          return current;
+        }
+
+        return {
+          ...current,
+          activeSession: removeSessionExercise(current.activeSession, exerciseId),
         };
       });
     },

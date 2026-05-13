@@ -308,13 +308,39 @@ export function deleteSetFromExercise(
   return setActivePointer(updated);
 }
 
+export function removeSessionExercise(
+  session: ActiveWorkoutSession,
+  exerciseId: string,
+) {
+  const updated = resolveExerciseOrder({
+    ...session,
+    exercises: session.exercises.filter((exercise) => exercise.id !== exerciseId),
+  });
+
+  return setActivePointer(updated);
+}
+
 export function moveSessionExercise(
   session: ActiveWorkoutSession,
   fromIndex: number,
   toIndex: number,
 ) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= session.exercises.length ||
+    toIndex >= session.exercises.length
+  ) {
+    return session;
+  }
+
   const nextExercises = [...session.exercises];
   const [item] = nextExercises.splice(fromIndex, 1);
+
+  if (!item) {
+    return session;
+  }
 
   nextExercises.splice(toIndex, 0, item);
 

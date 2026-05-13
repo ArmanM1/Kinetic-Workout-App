@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   FolderHeart,
+  GripVertical,
   Heart,
   Plus,
   Search,
@@ -86,6 +89,8 @@ export function ActiveWorkoutClient() {
     deleteSet,
     finishActiveSession,
     logFocusedSet,
+    moveExercise,
+    removeExercise,
     selectSet,
     startBlankSession,
     toggleFavorite,
@@ -99,6 +104,7 @@ export function ActiveWorkoutClient() {
     "quick",
   );
   const [finishDialogOpen, setFinishDialogOpen] = useState(false);
+  const [finishTitle, setFinishTitle] = useState("");
   const [finishNotes, setFinishNotes] = useState("");
   const [restNow, setRestNow] = useState(0);
   const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(null);
@@ -110,6 +116,11 @@ export function ActiveWorkoutClient() {
     exerciseName: string;
     setNumber: number;
   } | null>(null);
+  const [pendingDeleteExercise, setPendingDeleteExercise] = useState<{
+    exerciseId: string;
+    exerciseName: string;
+  } | null>(null);
+  const [draggedExerciseIndex, setDraggedExerciseIndex] = useState<number | null>(null);
   const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
   const dockLoadInputRef = useRef<HTMLInputElement>(null);
   const dockRepsInputRef = useRef<HTMLInputElement>(null);
@@ -289,6 +300,40 @@ export function ActiveWorkoutClient() {
     logFocusedSet();
   }
 
+  function handleMoveExercise(fromIndex: number, toIndex: number) {
+    if (!activeSession || fromIndex === toIndex) {
+      setDraggedExerciseIndex(null);
+      return;
+    }
+
+    const boundedToIndex = Math.min(
+      Math.max(toIndex, 0),
+      activeSession.exercises.length - 1,
+    );
+
+    moveExercise(fromIndex, boundedToIndex);
+    setDraggedExerciseIndex(null);
+  }
+
+  function handleFinishWorkout() {
+    if (!activeSession) {
+      return;
+    }
+
+    const completedSessionId = activeSession.id;
+    const resolvedTitle = finishTitle.trim();
+
+    if (resolvedTitle) {
+      updateActiveSessionTitle(resolvedTitle);
+    }
+
+    finishActiveSession(finishNotes);
+    setFinishNotes("");
+    setFinishTitle("");
+    setFinishDialogOpen(false);
+    router.push(`/app/workouts/${completedSessionId}/summary`);
+  }
+
   useEffect(() => {
     if (!isDockEditorOpen || !activeSet || !pendingDockFocusRef.current) {
       if (!activeSet) {
@@ -357,8 +402,8 @@ export function ActiveWorkoutClient() {
 
   return (
     <>
-      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen} fixed repositionInputs>
-        <DrawerContent className="border-white/10 bg-zinc-950 text-white">
+      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen} fixed repositionInputs={false}>
+        <DrawerContent className="max-h-[92dvh] border-white/10 bg-zinc-950 text-white">
           <DrawerHeader className="px-5 pb-2 pt-5 text-left">
             <div className="flex items-center justify-between gap-3">
               <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
@@ -381,7 +426,7 @@ export function ActiveWorkoutClient() {
               />
             </div>
           </DrawerHeader>
-          <div className="space-y-4 px-5 pb-5">
+          <div className="space-y-4 overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),1rem)]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
@@ -418,7 +463,7 @@ export function ActiveWorkoutClient() {
                 );
               })}
             </div>
-            <div className="no-scrollbar max-h-[min(56vh,calc(100dvh-16rem))] space-y-2 overflow-y-auto pr-1 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+            <div className="no-scrollbar max-h-[min(54dvh,calc(100dvh-15rem))] space-y-2 overflow-y-auto pr-1 pb-6">
               {filteredExercises.map((exercise) => (
                 <button
                   key={exercise.slug}
@@ -456,6 +501,12 @@ export function ActiveWorkoutClient() {
             <DialogTitle>End workout?</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            <Input
+              value={finishTitle}
+              onChange={(event) => setFinishTitle(event.target.value)}
+              className="h-12 rounded-2xl border-white/10 bg-white/[0.03] text-white placeholder:text-zinc-500"
+              placeholder="Optional workout name"
+            />
             <Textarea
               value={finishNotes}
               onChange={(event) => setFinishNotes(event.target.value)}
@@ -477,12 +528,7 @@ export function ActiveWorkoutClient() {
               </Button>
               <Button
                 className="bg-lime-300 text-zinc-950 hover:bg-lime-200"
-                onClick={() => {
-                  finishActiveSession(finishNotes);
-                  setFinishNotes("");
-                  setFinishDialogOpen(false);
-                  router.push("/app");
-                }}
+                onClick={handleFinishWorkout}
               >
                 Finish Workout
               </Button>
@@ -511,11 +557,53 @@ export function ActiveWorkoutClient() {
               onClick={() => {
                 clearActiveSession();
                 setFinishNotes("");
+                setFinishTitle("");
                 setFinishDialogOpen(false);
                 router.push("/app");
               }}
             >
               Discard workout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDeleteExercise !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteExercise(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="border border-rose-400/20 bg-zinc-950 text-white">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-rose-500/12 text-rose-300">
+              <Trash2 className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Remove this exercise?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              {pendingDeleteExercise
+                ? `${pendingDeleteExercise.exerciseName} and its sets will be removed from this workout.`
+                : "This exercise will be removed from this workout."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="border-white/10 bg-white/[0.03]">
+            <AlertDialogCancel className="border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]">
+              Keep exercise
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (!pendingDeleteExercise) {
+                  return;
+                }
+
+                removeExercise(pendingDeleteExercise.exerciseId);
+                setPendingDeleteExercise(null);
+              }}
+            >
+              Remove exercise
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -589,7 +677,14 @@ export function ActiveWorkoutClient() {
                 }).format(new Date(activeSession.startedAt))}
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setFinishDialogOpen(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFinishTitle(activeSession.title.trim());
+                setFinishDialogOpen(true);
+              }}
+            >
               Finish
             </Button>
           </div>
@@ -624,7 +719,7 @@ export function ActiveWorkoutClient() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {activeSession.exercises.map((exercise) => {
+            {activeSession.exercises.map((exercise, exerciseIndex) => {
               const catalogExercise = catalogBySlug.get(exercise.exerciseSlug);
               const muscleTag =
                 catalogExercise?.anatomyLabel ??
@@ -641,32 +736,83 @@ export function ActiveWorkoutClient() {
               return (
                 <Card
                   key={exercise.id}
-                  className="ios-card overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white"
+                  onDragEnd={() => setDraggedExerciseIndex(null)}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const fromIndex = Number(event.dataTransfer.getData("text/plain"));
+                    handleMoveExercise(
+                      Number.isNaN(fromIndex) ? draggedExerciseIndex ?? exerciseIndex : fromIndex,
+                      exerciseIndex,
+                    );
+                  }}
+                  className={cn(
+                    "ios-card overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white transition",
+                    draggedExerciseIndex === exerciseIndex && "border-lime-300/30 opacity-70",
+                  )}
                 >
                   <CardContent className="p-0">
                     <div className="border-b border-white/6 px-4 py-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-xl font-semibold">{exercise.exerciseName}</p>
-                            <Badge
-                              variant="outline"
-                              className="border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
-                            >
-                              {muscleTag}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="border-white/10 bg-white/[0.03] text-zinc-300"
-                            >
-                              {exercise.tag.replace("_", " ")}
-                            </Badge>
-                          </div>
-                          {previousSession ? (
+                        <div className="flex min-w-0 flex-1 gap-3">
+                          <button
+                            type="button"
+                            draggable
+                            onDragStart={(event) => {
+                              event.dataTransfer.effectAllowed = "move";
+                              event.dataTransfer.setData("text/plain", String(exerciseIndex));
+                              setDraggedExerciseIndex(exerciseIndex);
+                            }}
+                            className="lift-tap mt-0.5 flex size-10 shrink-0 cursor-grab items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-zinc-500 active:cursor-grabbing active:text-lime-200"
+                            aria-label={`Drag ${exercise.exerciseName} to reorder`}
+                          >
+                            <GripVertical className="size-4" />
+                          </button>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate text-xl font-semibold">{exercise.exerciseName}</p>
+                              <Badge
+                                variant="outline"
+                                className="border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
+                              >
+                                {muscleTag}
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="border-white/10 bg-white/[0.03] text-zinc-300"
+                              >
+                                {exercise.tag.replace("_", " ")}
+                              </Badge>
+                            </div>
+                            {previousSession ? (
                             <p className="mt-2 text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">
                               {previousSession.title}
                             </p>
                           ) : null}
+                            <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={exerciseIndex === 0}
+                              onClick={() => handleMoveExercise(exerciseIndex, exerciseIndex - 1)}
+                              className="lift-tap flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <ArrowUp className="size-3" />
+                              Up
+                            </button>
+                            <button
+                              type="button"
+                              disabled={exerciseIndex === activeSession.exercises.length - 1}
+                              onClick={() => handleMoveExercise(exerciseIndex, exerciseIndex + 1)}
+                              className="lift-tap flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <ArrowDown className="size-3" />
+                              Down
+                            </button>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="flex min-w-[3.5rem] flex-col items-center rounded-[1.2rem] border border-white/10 bg-black/20 px-2.5 py-1.5 text-center">
@@ -698,6 +844,19 @@ export function ActiveWorkoutClient() {
                               )}
                             />
                             <span className="sr-only">Toggle favorite</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPendingDeleteExercise({
+                                exerciseId: exercise.id,
+                                exerciseName: exercise.exerciseName,
+                              })
+                            }
+                            className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-rose-400/15 bg-rose-400/10 text-rose-200 transition hover:bg-rose-400/15 hover:text-rose-100"
+                          >
+                            <Trash2 className="size-4" />
+                            <span className="sr-only">Remove exercise</span>
                           </button>
                         </div>
                       </div>
