@@ -475,6 +475,8 @@ export function ActiveWorkoutClient() {
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
+                type="search"
+                aria-label="Search exercises"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
@@ -547,6 +549,7 @@ export function ActiveWorkoutClient() {
           </DialogHeader>
           <div className="space-y-3">
             <Input
+              aria-label="Optional workout name"
               value={finishTitle}
               onChange={(event) => setFinishTitle(event.target.value)}
               className="h-12 rounded-2xl border-white/10 bg-white/[0.03] text-white placeholder:text-zinc-500"
@@ -704,6 +707,7 @@ export function ActiveWorkoutClient() {
               </Badge>
               {activeSession.entryPoint === "blank" ? (
                 <Input
+                  aria-label="Workout name"
                   value={activeSession.title}
                   onChange={(event) => updateActiveSessionTitle(event.target.value)}
                   onBlur={(event) =>
@@ -1038,6 +1042,7 @@ export function ActiveWorkoutClient() {
                           ) : (
                             <div className="mt-3 grid grid-cols-2 gap-2">
                               <Input
+                                aria-label={exercise.tag === "assisted" ? "Assist load" : "Weight load"}
                                 value={loadValue}
                                 inputMode={exercise.tag === "assisted" ? "numeric" : "decimal"}
                                 enterKeyHint="next"
@@ -1063,6 +1068,7 @@ export function ActiveWorkoutClient() {
                                 placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
                               />
                               <Input
+                                aria-label="Reps"
                                 value={set.draftReps ?? ""}
                                 inputMode="numeric"
                                 enterKeyHint="done"
@@ -1172,6 +1178,7 @@ export function ActiveWorkoutClient() {
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Input
+                aria-label={activeExercise.tag === "assisted" ? "Assist load" : "Weight load"}
                 ref={dockLoadInputRef}
                 value={activeLoadValue}
                 inputMode={activeExercise.tag === "assisted" ? "numeric" : "decimal"}
@@ -1194,6 +1201,7 @@ export function ActiveWorkoutClient() {
                 placeholder={activeExercise.tag === "assisted" ? "Assist" : "Weight"}
               />
               <Input
+                aria-label="Reps"
                 ref={dockRepsInputRef}
                 value={activeRepsValue}
                 inputMode="numeric"
