@@ -14,6 +14,8 @@ import {
   calculateEffectiveLoad,
   findPreviousPerformance,
   getSessionVolume,
+  moveSessionExercise,
+  removeSessionExercise,
   startBlankWorkout,
   startWorkoutFromSplitDay,
 } from "@/lib/domain/workout";
@@ -47,6 +49,29 @@ test("previous-value autofill uses most recent completed set", () => {
 
   assert.equal(firstSet.draftWeight, previous.weight);
   assert.equal(firstSet.draftReps, previous.reps);
+});
+
+test("active session exercises can be reordered and removed", () => {
+  const state = createHistoricalState();
+  const session = startBlankWorkout(state.settings);
+  const bench = findExerciseByName("Barbell Bench Press - Medium Grip");
+  const squat = findExerciseByName("Barbell Squat");
+
+  assert.ok(bench);
+  assert.ok(squat);
+
+  const withBench = addExerciseToSession(session, bench, state.history);
+  const withBoth = addExerciseToSession(withBench, squat, state.history);
+  const reordered = moveSessionExercise(withBoth, 0, 1);
+
+  assert.equal(reordered.exercises[0].exerciseName, squat.name);
+  assert.equal(reordered.exercises[0].order, 0);
+  assert.equal(reordered.exercises[1].order, 1);
+
+  const removed = removeSessionExercise(reordered, reordered.exercises[0].id);
+
+  assert.equal(removed.exercises.length, 1);
+  assert.equal(removed.exercises[0].exerciseName, bench.name);
 });
 
 test("assisted load calculation subtracts assist amount from body weight", () => {
