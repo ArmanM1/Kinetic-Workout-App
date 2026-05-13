@@ -39,15 +39,25 @@ export function findPreviousPerformance(
       continue;
     }
 
-    const completedSet = [...exercise.sets]
+    const completedSets = exercise.sets
       .filter((set) => set.completedAt)
-      .sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? ""))[0];
+      .sort((a, b) => a.setNumber - b.setNumber);
 
-    if (completedSet) {
+    if (completedSets.length > 0) {
+      const latestCompletedSet = [...completedSets].sort((a, b) =>
+        (b.completedAt ?? "").localeCompare(a.completedAt ?? ""),
+      )[0];
+
       return {
-        weight: completedSet.completedWeight,
-        reps: completedSet.completedReps,
-        completedAt: completedSet.completedAt,
+        weight: latestCompletedSet.completedWeight,
+        reps: latestCompletedSet.completedReps,
+        completedAt: latestCompletedSet.completedAt,
+        sets: completedSets.map((set) => ({
+          setNumber: set.setNumber,
+          weight: set.completedWeight,
+          reps: set.completedReps,
+          completedAt: set.completedAt,
+        })),
       };
     }
   }
@@ -56,6 +66,7 @@ export function findPreviousPerformance(
     weight: null,
     reps: null,
     completedAt: null,
+    sets: [],
   };
 }
 
@@ -77,22 +88,33 @@ export function calculateEffectiveLoad(
   return completedWeight;
 }
 
-export function createDraftSets(
+function createDraftSet(
   previous: PreviousPerformance,
-  setCount = 3,
-): WorkoutSet[] {
-  return Array.from({ length: setCount }, (_, index) => ({
+  setNumber: number,
+): WorkoutSet {
+  const previousSet = previous.sets.find((set) => set.setNumber === setNumber);
+
+  return {
     id: createId("set"),
-    setNumber: index + 1,
-    previousWeight: previous.weight,
-    previousReps: previous.reps,
-    draftWeight: previous.weight,
-    draftReps: previous.reps,
+    setNumber,
+    previousWeight: previousSet?.weight ?? null,
+    previousReps: previousSet?.reps ?? null,
+    draftWeight: previousSet?.weight ?? null,
+    draftReps: previousSet?.reps ?? null,
     assistAmount: null,
     completedWeight: null,
     completedReps: null,
     completedAt: null,
-  }));
+  };
+}
+
+export function createDraftSets(
+  previous: PreviousPerformance,
+  setCount = 3,
+): WorkoutSet[] {
+  return Array.from({ length: setCount }, (_, index) =>
+    createDraftSet(previous, index + 1),
+  );
 }
 
 export function createSessionExercise(
@@ -274,7 +296,7 @@ export function addSetToExercise(
       }
 
       const previous = findPreviousPerformance(history, exercise.exerciseSlug);
-      const nextSet = createDraftSets(previous, 1)[0];
+      const nextSet = createDraftSet(previous, exercise.sets.length + 1);
 
       return {
         ...exercise,

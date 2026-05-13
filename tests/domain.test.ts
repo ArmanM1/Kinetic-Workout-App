@@ -11,6 +11,7 @@ import {
 } from "@/lib/domain/analytics";
 import {
   addExerciseToSession,
+  addSetToExercise,
   calculateEffectiveLoad,
   findPreviousPerformance,
   finishWorkout,
@@ -38,7 +39,7 @@ function createHistoricalState() {
   };
 }
 
-test("previous-value autofill uses most recent completed set", () => {
+test("previous-value autofill maps historical set numbers to matching draft sets", () => {
   const state = createHistoricalState();
   const session = startBlankWorkout(state.settings);
   const exercise = findExerciseByName("Barbell Bench Press - Medium Grip");
@@ -46,11 +47,47 @@ test("previous-value autofill uses most recent completed set", () => {
   assert.ok(exercise);
 
   const nextSession = addExerciseToSession(session, exercise, state.history);
-  const firstSet = nextSession.exercises[0].sets[0];
   const previous = findPreviousPerformance(state.history, exercise.slug);
 
-  assert.equal(firstSet.draftWeight, previous.weight);
-  assert.equal(firstSet.draftReps, previous.reps);
+  for (const set of nextSession.exercises[0].sets) {
+    const previousSet = previous.sets.find(
+      (entry) => entry.setNumber === set.setNumber,
+    );
+
+    assert.equal(set.draftWeight, previousSet?.weight ?? null);
+    assert.equal(set.draftReps, previousSet?.reps ?? null);
+  }
+
+  assert.deepEqual(
+    nextSession.exercises[0].sets.map((set) => set.draftWeight),
+    [205, 210, 215],
+  );
+  assert.deepEqual(
+    nextSession.exercises[0].sets.map((set) => set.draftReps),
+    [6, 6, 5],
+  );
+});
+
+test("additional sets remain empty when no matching previous set exists", () => {
+  const state = createHistoricalState();
+  const session = startBlankWorkout(state.settings);
+  const exercise = findExerciseByName("Barbell Bench Press - Medium Grip");
+
+  assert.ok(exercise);
+
+  const withExercise = addExerciseToSession(session, exercise, state.history);
+  const withExtraSet = addSetToExercise(
+    withExercise,
+    withExercise.exercises[0].id,
+    state.history,
+  );
+  const fourthSet = withExtraSet.exercises[0].sets[3];
+
+  assert.equal(fourthSet.setNumber, 4);
+  assert.equal(fourthSet.previousWeight, null);
+  assert.equal(fourthSet.previousReps, null);
+  assert.equal(fourthSet.draftWeight, null);
+  assert.equal(fourthSet.draftReps, null);
 });
 
 test("active session exercises can be reordered and removed", () => {

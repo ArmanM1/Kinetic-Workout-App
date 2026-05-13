@@ -47,10 +47,18 @@ export type UserSettings = {
   archivedExerciseSlugs: string[];
 };
 
+export type PreviousSetPerformance = {
+  setNumber: number;
+  weight: number | null;
+  reps: number | null;
+  completedAt: string | null;
+};
+
 export type PreviousPerformance = {
   weight: number | null;
   reps: number | null;
   completedAt: string | null;
+  sets: PreviousSetPerformance[];
 };
 
 export type WorkoutSet = {
