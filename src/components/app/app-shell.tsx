@@ -91,7 +91,7 @@ export function AppShell({
         )}
       >
       <header className="sticky top-0 z-30 bg-zinc-950/65 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[27rem] items-center justify-between gap-4 px-4 pb-3 pt-5">
+        <div className="mx-auto flex w-full max-w-[27rem] items-center justify-between gap-4 px-4 pb-3 pt-[calc(max(env(safe-area-inset-top),0px)+1.25rem)]">
           <div className="flex items-center gap-3">
             <Logo showWordmark={false} />
             <p className="text-xl font-semibold uppercase tracking-[0.18em] text-lime-300">

@@ -8,6 +8,7 @@ import {
   Flame,
   Medal,
   Sparkles,
+  Target,
   Trophy,
 } from "lucide-react";
 
@@ -135,6 +136,21 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
     .sort((a, b) => b.volume - a.volume);
   const topExerciseVolume = Math.max(...exerciseSummaries.map((exercise) => exercise.volume), 1);
   const progressCount = exerciseSummaries.filter((exercise) => exercise.isProgress).length;
+  const topExercise = exerciseSummaries[0] ?? null;
+  const workoutMinutes = Math.max(
+    1,
+    Math.round(
+      (new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) /
+        60000,
+    ),
+  );
+  const volumePerMinute = totalVolume / workoutMinutes;
+  const celebrationLine =
+    progressCount > 0
+      ? `${progressCount} progress signal${progressCount === 1 ? "" : "s"} unlocked.`
+      : totalVolume > 0
+        ? "New baseline banked. Future you has a target."
+        : "Workout saved. Next one starts stronger.";
   const finishedTime = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -156,6 +172,9 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
               </Badge>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">{session.title}</h1>
               <p className="mt-2 text-sm text-zinc-400">Finished {finishedTime}</p>
+              <p className="mt-3 max-w-[16rem] text-sm leading-6 text-lime-100/80">
+                {celebrationLine}
+              </p>
             </div>
             <div className="flex size-14 shrink-0 items-center justify-center rounded-[1.4rem] bg-lime-300 text-zinc-950 shadow-[0_0_45px_rgba(196,255,57,0.35)]">
               <CheckCircle2 className="size-7" />
@@ -172,6 +191,21 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">Work</p>
               <p className="mt-2 text-3xl font-semibold">{completedSets}</p>
               <p className="text-xs text-zinc-500">sets / {totalReps} reps</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[1.25rem] border border-lime-300/15 bg-lime-300/10 p-3">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-lime-100/70">Time</p>
+              <p className="mt-1 text-xl font-semibold">{workoutMinutes}m</p>
+            </div>
+            <div className="rounded-[1.25rem] border border-cyan-300/15 bg-cyan-300/10 p-3">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-cyan-100/70">Pace</p>
+              <p className="mt-1 text-xl font-semibold">{formatNumber(volumePerMinute)}</p>
+            </div>
+            <div className="rounded-[1.25rem] border border-fuchsia-300/15 bg-fuchsia-300/10 p-3">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-fuchsia-100/70">PRs</p>
+              <p className="mt-1 text-xl font-semibold">{progressCount}</p>
             </div>
           </div>
 
@@ -196,6 +230,23 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
               </div>
             </div>
           </div>
+
+          {topExercise ? (
+            <div className="rounded-[1.5rem] border border-cyan-300/20 bg-cyan-300/10 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-cyan-300/15 text-cyan-100">
+                  <Target className="size-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-cyan-100/70">Top lift</p>
+                  <p className="truncate font-semibold">{topExercise.name}</p>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    {formatNumber(topExercise.volume)} {profile.weightUnit} total volume
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -203,7 +254,7 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">Exercise breakdown</p>
-            <h2 className="mt-1 text-2xl font-semibold">Damage report</h2>
+            <h2 className="mt-1 text-2xl font-semibold">Victory breakdown</h2>
           </div>
           <Dumbbell className="size-6 text-lime-300" />
         </div>
@@ -229,7 +280,7 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
                 {exercise.isProgress ? (
                   <Badge className="shrink-0 border border-lime-300/30 bg-lime-300/15 text-lime-100">
                     <ArrowUpRight className="size-3.5" />
-                    PR pace
+                    Progress
                   </Badge>
                 ) : null}
               </div>
@@ -261,7 +312,7 @@ export function WorkoutSummaryClient({ sessionId }: { sessionId: string }) {
             <Medal className="size-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Locked in.</h2>
+            <h2 className="text-xl font-semibold">Locked in. Go be proud.</h2>
             <p className="text-sm text-zinc-500">
               Your summary is saved to history and will sync through Supabase for this account.
             </p>

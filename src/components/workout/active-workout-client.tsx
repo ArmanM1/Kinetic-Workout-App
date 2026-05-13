@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
-  ArrowDown,
-  ArrowUp,
   FolderHeart,
   GripVertical,
   Heart,
@@ -88,6 +86,7 @@ export function ActiveWorkoutClient() {
     clearActiveSession,
     deleteSet,
     finishActiveSession,
+    clearSelectedSet,
     logFocusedSet,
     moveExercise,
     removeExercise,
@@ -121,6 +120,7 @@ export function ActiveWorkoutClient() {
     exerciseName: string;
   } | null>(null);
   const [draggedExerciseIndex, setDraggedExerciseIndex] = useState<number | null>(null);
+  const draggedExerciseIndexRef = useRef<number | null>(null);
   const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
   const dockLoadInputRef = useRef<HTMLInputElement>(null);
   const dockRepsInputRef = useRef<HTMLInputElement>(null);
@@ -252,6 +252,13 @@ export function ActiveWorkoutClient() {
     setLibraryOpen(false);
   }
 
+  function clearSetSelection() {
+    dockLoadInputRef.current?.blur();
+    dockRepsInputRef.current?.blur();
+    pendingDockFocusRef.current = null;
+    clearSelectedSet();
+  }
+
   function focusSet(
     exerciseId: string,
     setId: string,
@@ -300,9 +307,16 @@ export function ActiveWorkoutClient() {
     logFocusedSet();
   }
 
-  function handleMoveExercise(fromIndex: number, toIndex: number) {
+  function handleMoveExercise(
+    fromIndex: number,
+    toIndex: number,
+    options?: { keepDragging?: boolean },
+  ) {
     if (!activeSession || fromIndex === toIndex) {
-      setDraggedExerciseIndex(null);
+      if (!options?.keepDragging) {
+        draggedExerciseIndexRef.current = null;
+        setDraggedExerciseIndex(null);
+      }
       return;
     }
 
@@ -312,7 +326,36 @@ export function ActiveWorkoutClient() {
     );
 
     moveExercise(fromIndex, boundedToIndex);
+
+    if (options?.keepDragging) {
+      draggedExerciseIndexRef.current = boundedToIndex;
+      setDraggedExerciseIndex(boundedToIndex);
+    } else {
+      draggedExerciseIndexRef.current = null;
+      setDraggedExerciseIndex(null);
+    }
+  }
+
+  function finishExerciseDrag() {
+    draggedExerciseIndexRef.current = null;
     setDraggedExerciseIndex(null);
+  }
+
+  function handleExercisePointerMove(clientX: number, clientY: number) {
+    const fromIndex = draggedExerciseIndexRef.current;
+
+    if (fromIndex == null) {
+      return;
+    }
+
+    const target = document
+      .elementFromPoint(clientX, clientY)
+      ?.closest<HTMLElement>("[data-exercise-index]");
+    const toIndex = target ? Number(target.dataset.exerciseIndex) : Number.NaN;
+
+    if (!Number.isNaN(toIndex) && toIndex !== fromIndex) {
+      handleMoveExercise(fromIndex, toIndex, { keepDragging: true });
+    }
   }
 
   function handleFinishWorkout() {
@@ -323,11 +366,7 @@ export function ActiveWorkoutClient() {
     const completedSessionId = activeSession.id;
     const resolvedTitle = finishTitle.trim();
 
-    if (resolvedTitle) {
-      updateActiveSessionTitle(resolvedTitle);
-    }
-
-    finishActiveSession(finishNotes);
+    finishActiveSession(finishNotes, resolvedTitle || activeSession.title);
     setFinishNotes("");
     setFinishTitle("");
     setFinishDialogOpen(false);
@@ -403,7 +442,13 @@ export function ActiveWorkoutClient() {
   return (
     <>
       <Drawer open={libraryOpen} onOpenChange={setLibraryOpen} fixed repositionInputs={false}>
-        <DrawerContent className="max-h-[92dvh] border-white/10 bg-zinc-950 text-white">
+        <DrawerContent
+          className="border-white/10 bg-zinc-950 text-white shadow-[0_-24px_80px_-45px_rgba(196,255,57,0.25)]"
+          style={{
+            bottom: keyboardInset ? `${keyboardInset}px` : undefined,
+            maxHeight: keyboardInset ? `calc(100dvh - ${keyboardInset + 12}px)` : "92dvh",
+          }}
+        >
           <DrawerHeader className="px-5 pb-2 pt-5 text-left">
             <div className="flex items-center justify-between gap-3">
               <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
@@ -426,7 +471,7 @@ export function ActiveWorkoutClient() {
               />
             </div>
           </DrawerHeader>
-          <div className="space-y-4 overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),1rem)]">
+          <div className="space-y-4 overflow-y-auto px-5 pb-[calc(max(env(safe-area-inset-bottom),1rem)+0.75rem)]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
@@ -463,7 +508,7 @@ export function ActiveWorkoutClient() {
                 );
               })}
             </div>
-            <div className="no-scrollbar max-h-[min(54dvh,calc(100dvh-15rem))] space-y-2 overflow-y-auto pr-1 pb-6">
+            <div className="no-scrollbar max-h-[min(54dvh,calc(100dvh-15rem))] space-y-2 overflow-y-auto pr-1 pb-8">
               {filteredExercises.map((exercise) => (
                 <button
                   key={exercise.slug}
@@ -691,8 +736,16 @@ export function ActiveWorkoutClient() {
 
           <div className="flex flex-wrap gap-2">
             {activeExercise && activeSet ? (
-              <div className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.22em] text-zinc-400">
-                {activeExercise.exerciseName} / Set {activeSet.setNumber}
+              <div className="flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-3 py-2 text-xs uppercase tracking-[0.22em] text-lime-100">
+                <span className="truncate">{activeExercise.exerciseName} / Set {activeSet.setNumber}</span>
+                <button
+                  type="button"
+                  onClick={clearSetSelection}
+                  className="-mr-1 flex size-6 items-center justify-center rounded-full bg-black/20 text-lime-100 transition hover:bg-white/10"
+                >
+                  <X className="size-3.5" />
+                  <span className="sr-only">Clear selected set</span>
+                </button>
               </div>
             ) : null}
             {profile.bodyWeight == null &&
@@ -736,7 +789,8 @@ export function ActiveWorkoutClient() {
               return (
                 <Card
                   key={exercise.id}
-                  onDragEnd={() => setDraggedExerciseIndex(null)}
+                  data-exercise-index={exerciseIndex}
+                  onDragEnd={finishExerciseDrag}
                   onDragOver={(event) => {
                     event.preventDefault();
                     event.dataTransfer.dropEffect = "move";
@@ -750,8 +804,9 @@ export function ActiveWorkoutClient() {
                     );
                   }}
                   className={cn(
-                    "ios-card overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white transition",
-                    draggedExerciseIndex === exerciseIndex && "border-lime-300/30 opacity-70",
+                    "ios-card overflow-hidden rounded-[1.75rem] border-white/8 bg-white/[0.04] text-white transition duration-200",
+                    draggedExerciseIndex === exerciseIndex &&
+                      "scale-[0.985] border-lime-300/40 bg-lime-300/[0.06] shadow-[0_28px_90px_-55px_rgba(196,255,57,0.9)]",
                   )}
                 >
                   <CardContent className="p-0">
@@ -764,12 +819,29 @@ export function ActiveWorkoutClient() {
                             onDragStart={(event) => {
                               event.dataTransfer.effectAllowed = "move";
                               event.dataTransfer.setData("text/plain", String(exerciseIndex));
+                              draggedExerciseIndexRef.current = exerciseIndex;
                               setDraggedExerciseIndex(exerciseIndex);
                             }}
-                            className="lift-tap mt-0.5 flex size-10 shrink-0 cursor-grab items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-zinc-500 active:cursor-grabbing active:text-lime-200"
+                            onPointerDown={(event) => {
+                              if (event.pointerType === "mouse") {
+                                return;
+                              }
+
+                              event.currentTarget.setPointerCapture(event.pointerId);
+                              draggedExerciseIndexRef.current = exerciseIndex;
+                              setDraggedExerciseIndex(exerciseIndex);
+                            }}
+                            onPointerMove={(event) => {
+                              if (event.pointerType !== "mouse") {
+                                handleExercisePointerMove(event.clientX, event.clientY);
+                              }
+                            }}
+                            onPointerUp={finishExerciseDrag}
+                            onPointerCancel={finishExerciseDrag}
+                            className="lift-tap mt-0.5 flex size-11 shrink-0 touch-none cursor-grab items-center justify-center rounded-2xl border border-lime-300/20 bg-lime-300/10 text-lime-200 shadow-[0_0_28px_-18px_rgba(196,255,57,1)] transition active:scale-95 active:cursor-grabbing active:border-lime-300/50 active:bg-lime-300/15"
                             aria-label={`Drag ${exercise.exerciseName} to reorder`}
                           >
-                            <GripVertical className="size-4" />
+                            <GripVertical className="size-5" />
                           </button>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -788,30 +860,13 @@ export function ActiveWorkoutClient() {
                               </Badge>
                             </div>
                             {previousSession ? (
-                            <p className="mt-2 text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">
-                              {previousSession.title}
+                              <p className="mt-2 text-[0.68rem] uppercase tracking-[0.24em] text-lime-200/70">
+                                {previousSession.title}
+                              </p>
+                            ) : null}
+                            <p className="mt-3 text-[0.65rem] uppercase tracking-[0.22em] text-zinc-500">
+                              Drag handle to reorder
                             </p>
-                          ) : null}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              disabled={exerciseIndex === 0}
-                              onClick={() => handleMoveExercise(exerciseIndex, exerciseIndex - 1)}
-                              className="lift-tap flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <ArrowUp className="size-3" />
-                              Up
-                            </button>
-                            <button
-                              type="button"
-                              disabled={exerciseIndex === activeSession.exercises.length - 1}
-                              onClick={() => handleMoveExercise(exerciseIndex, exerciseIndex + 1)}
-                              className="lift-tap flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <ArrowDown className="size-3" />
-                              Down
-                            </button>
-                            </div>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
@@ -1107,15 +1162,11 @@ export function ActiveWorkoutClient() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  dockLoadInputRef.current?.blur();
-                  dockRepsInputRef.current?.blur();
-                  pendingDockFocusRef.current = null;
-                }}
+                onClick={clearSetSelection}
                 className="flex size-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/[0.05] hover:text-white"
               >
                 <X className="size-4" />
-                <span className="sr-only">Dismiss keyboard</span>
+                <span className="sr-only">Clear selected set</span>
               </button>
             </div>
 

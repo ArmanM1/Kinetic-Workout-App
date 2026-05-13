@@ -13,9 +13,11 @@ import {
   addExerciseToSession,
   calculateEffectiveLoad,
   findPreviousPerformance,
+  finishWorkout,
   getSessionVolume,
   moveSessionExercise,
   removeSessionExercise,
+  selectActiveSet,
   startBlankWorkout,
   startWorkoutFromSplitDay,
 } from "@/lib/domain/workout";
@@ -72,6 +74,60 @@ test("active session exercises can be reordered and removed", () => {
 
   assert.equal(removed.exercises.length, 1);
   assert.equal(removed.exercises[0].exerciseName, bench.name);
+});
+
+
+test("active set selection can be cleared", () => {
+  const state = createHistoricalState();
+  const session = startBlankWorkout(state.settings);
+  const exercise = findExerciseByName("Barbell Bench Press - Medium Grip");
+
+  assert.ok(exercise);
+
+  const withExercise = addExerciseToSession(session, exercise, state.history);
+  const selected = selectActiveSet(
+    withExercise,
+    withExercise.exercises[0].id,
+    withExercise.exercises[0].sets[0].id,
+  );
+  const cleared = selectActiveSet(selected, null, null);
+
+  assert.equal(cleared.activeExerciseId, null);
+  assert.equal(cleared.activeSetId, null);
+});
+
+test("finishing a workout can apply an optional workout name", () => {
+  const state = createHistoricalState();
+  const session = startBlankWorkout(state.settings);
+  const exercise = findExerciseByName("Barbell Bench Press - Medium Grip");
+
+  assert.ok(exercise);
+
+  const withExercise = addExerciseToSession(session, exercise, state.history);
+  const completed = finishWorkout(
+    {
+      ...withExercise,
+      exercises: withExercise.exercises.map((entry) => ({
+        ...entry,
+        sets: entry.sets.map((set, index) =>
+          index === 0
+            ? {
+                ...set,
+                completedWeight: 185,
+                completedReps: 5,
+                completedAt: "2026-05-13T12:00:00.000Z",
+              }
+            : set,
+        ),
+      })),
+    },
+    "Felt strong",
+    "Birthday Bench",
+  );
+
+  assert.equal(completed.title, "Birthday Bench");
+  assert.equal(completed.notes, "Felt strong");
+  assert.equal(completed.exercises[0].sets.length, 1);
 });
 
 test("assisted load calculation subtracts assist amount from body weight", () => {
