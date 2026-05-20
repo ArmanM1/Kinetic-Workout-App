@@ -1,0 +1,1 @@
+## 2024-05-24 - Mobile Search Input UX | **Learning:** Using type="search" on search inputs triggers the native "Search" keyboard key on iOS, significantly improving the mobile search experience. Also added aria-label for accessibility. | **Action:** Always use type="search" and aria-label on search inputs.
