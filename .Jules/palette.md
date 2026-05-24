@@ -1,0 +1,1 @@
+## 2024-05-24 - Mobile Search Key & Utility A11y | **Learning:** iOS keyboards require type="search" to display the "Search" key instead of "Return", and utility inputs without visible label components require an explicit aria-label for screen reader accessibility. | **Action:** Always use type="search" for search inputs and ensure they have an aria-label.
