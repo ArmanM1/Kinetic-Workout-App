@@ -1,0 +1,3 @@
+## 2024-05-26 - Add type="search" and aria-label to Search Inputs
+**Learning:** For better mobile UX, especially on iOS, `type="search"` should be used on search inputs to trigger the native 'Search' keyboard key instead of the generic 'Return' or 'Go' key. Utility inputs without visible labels should also be accompanied by explicit `aria-label` attributes for accessibility.
+**Action:** Always add `type="search"` to search inputs and `aria-label` when a visible label is not used for form elements.
