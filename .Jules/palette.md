@@ -1,0 +1,1 @@
+## 2024-05-27 - Keyboard native UX for Mobile\n**Learning:** Mobile browsers display standard text keyboards for inputs unless specified. \n**Action:** Use 'type="search"' for Search inputs to display native search keyboards, enhancing UX on iOS.
