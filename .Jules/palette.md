@@ -1,0 +1,3 @@
+## 2024-05-29 - Mobile Keyboard Optimization for Search & ARIA for Utility Inputs
+**Learning:** Using `type="search"` on search inputs triggers the native "Search" keyboard key on mobile devices (especially iOS), significantly improving interaction flow compared to standard inputs. Additionally, utility inputs that rely solely on placeholders without a visual `<Label>` component must have an explicit `aria-label` for screen reader accessibility.
+**Action:** Always use `type="search"` for filtering/search inputs to enhance the mobile app feel. Ensure any `<Input>` or `<Textarea>` used inline or in compact utility spaces without visible labels includes an `aria-label` attribute describing its purpose.
