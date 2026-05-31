@@ -1,0 +1,3 @@
+## 2024-05-18 - Native iOS Search and Input Accessibility
+**Learning:** Adding `type="search"` to `<Input>` fields intended for searching improves the UX significantly on iOS devices by triggering the native "Search" keyboard key, rather than standard "Return" key. Missing labels on utility inputs without visible labels degrades screen reader experience.
+**Action:** Always verify if search inputs have `type="search"` to boost mobile friendliness and add `aria-label` to standalone inputs.
