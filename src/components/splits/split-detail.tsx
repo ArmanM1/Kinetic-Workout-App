@@ -72,6 +72,7 @@ export function SplitDetail({ slug }: { slug: string }) {
                 </div>
                 <button
                   type="button"
+                  aria-label={`Start ${day.name}`}
                   onClick={() =>
                     runOrConfirm(() => {
                       startSplitDaySession(split.id, day.id);
