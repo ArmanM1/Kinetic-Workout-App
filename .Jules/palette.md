@@ -1,0 +1,3 @@
+## 2026-04-27 - Improve Mobile Keyboard and Input Accessibility
+**Learning:** Adding type='search' to search inputs triggers native mobile 'Search' keys (especially on iOS), making them feel much more native and easier to use. Also, many internal utility input fields lack explicit labels since they're visually self-explanatory via context or placeholders, but they still need aria-label attributes to be accessible for screen readers.
+**Action:** Always check that input elements intended for searching use type='search' and ensure that *all* inputs without a corresponding label have an aria-label explaining their purpose.
