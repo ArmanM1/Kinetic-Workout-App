@@ -1,0 +1,3 @@
+## 2025-02-23 - Improve Mobile Keyboard UX & Form Accessibility
+**Learning:** Using `type="search"` on Next.js/React search inputs is critical for triggering the correct native keyboard key on iOS, creating a more app-like feel. Additionally, highly customized utility inputs (like inline tracking cells for reps/weight) that lack visible `<label>` components often cause accessibility issues; they require explicit `aria-label` attributes to ensure screen readers can announce their purpose.
+**Action:** Always add `type="search"` to search fields and `aria-label` (or `aria-labelledby`) to any input without an explicitly associated visual label.
