@@ -79,6 +79,7 @@ export function SplitDetail({ slug }: { slug: string }) {
                     }, day.name)
                   }
                   className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950 transition hover:bg-lime-200"
+                  aria-label={`Start ${day.name} workout`}
                 >
                   <Play className="size-5 fill-current" />
                 </button>
