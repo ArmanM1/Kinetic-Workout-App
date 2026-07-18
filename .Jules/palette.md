@@ -1,0 +1,3 @@
+## 2024-07-18 - Improve Mobile Keyboard UX for Search Inputs
+**Learning:** Using `type="search"` on input fields triggers the native iOS/mobile "Search" key on the virtual keyboard instead of a standard "Return" key, which provides a significantly better native feel. In addition, inputs without explicit visible label components should always have an `aria-label` attribute to improve screen reader accessibility.
+**Action:** Applied `type="search"` and `aria-label="Search exercises"` to exercise library search inputs in both the global exercise browser and the active workout drawer to enhance both mobile interaction and accessibility.
