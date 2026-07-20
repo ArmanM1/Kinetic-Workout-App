@@ -107,7 +107,7 @@ export function AppShell({
                 </span>
               </Button>
             ) : null}
-            <Button asChild variant="ghost" size="icon">
+            <Button asChild variant="ghost" size="icon" aria-label="Settings">
               <Link href="/app/settings">
                 <Settings2 className="size-4" />
                 <span className="sr-only">Open settings</span>
