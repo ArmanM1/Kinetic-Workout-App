@@ -1,0 +1,3 @@
+## 2024-05-18 - Trigger Mobile Search Keyboard & Label Inputs
+**Learning:** Search inputs without visible labels fail accessibility checks, and using generic text inputs for search on mobile prevents the native "Search" action key from appearing on iOS.
+**Action:** Always apply `type="search"` to search fields for better mobile UX, and ensure inputs without visible text labels include an explicit `aria-label`.
