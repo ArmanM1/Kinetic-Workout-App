@@ -200,6 +200,8 @@ export function ExerciseBrowser() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search exercises..."
+            type="search"
+            aria-label="Search exercises"
             className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
           />
         </div>
