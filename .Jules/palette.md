@@ -1,0 +1,1 @@
+## 2024-08-03 - Native Search Keyboard & ARIA Labels for Search Inputs | **Learning:** Using type="search" on inputs triggers the native iOS/mobile search keyboard, making web apps feel more native. Inputs lacking visible labels must have aria-label for accessibility. | **Action:** Always add type="search" and aria-label to generic search inputs without visual labels.
