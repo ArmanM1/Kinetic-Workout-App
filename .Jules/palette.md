@@ -1,0 +1,3 @@
+## 2023-10-25 - Improve mobile search keyboard UX and accessibility
+**Learning:** Using `type="search"` on inputs triggers the native iOS/Android "Search" key on mobile virtual keyboards (rather than the generic "Return" key), which greatly improves mobile-first UX. Additionally, utility search inputs often rely only on placeholders/icons, meaning they lack an accessible name for screen readers unless an explicit `aria-label` is provided.
+**Action:** Always add `type="search"` and an explicit `aria-label` to utility search inputs, and use `[&::-webkit-search-cancel-button]:hidden` if the native cancel button interferes with custom designs.
