@@ -1,0 +1,3 @@
+## 2024-08-10 - Mobile Search Input UX
+**Learning:** Native mobile keyboards (specifically iOS) render generic "Return/Enter" keys for standard text inputs used as search fields, leading to sub-optimal UX. Adding `type="search"` instantly transforms this key into a native "Search" action. However, WebKit browsers forcefully inject their own clear button (`::-webkit-search-cancel-button`) into search inputs, which breaks custom UI designs (like shadcn/ui) if not explicitly hidden.
+**Action:** When converting custom `<Input>` components to `type="search"`, always ensure `[&::-webkit-search-cancel-button]:hidden` is appended to the Tailwind classes to preserve design system integrity.
