@@ -1,0 +1,3 @@
+## 2024-10-24 - Mobile Search Input UX
+**Learning:** Using `type="search"` on search inputs triggers the native "Search" key on mobile keyboards (especially iOS), but introduces an unwanted default clear button. Using `[&::-webkit-search-cancel-button]:hidden` hides it while preserving the native keyboard behavior. Additionally, utility inputs like search bars often lack visible labels, requiring explicit `aria-label` attributes for screen readers.
+**Action:** Always use `type="search"` with `[&::-webkit-search-cancel-button]:hidden` and an `aria-label` for search inputs to ensure native keyboard optimization and accessibility without compromising visual design.
