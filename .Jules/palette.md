@@ -1,0 +1,3 @@
+## 2024-08-16 - Mobile Search Keyboard UX
+**Learning:** Using generic text inputs for search on mobile devices defaults the virtual keyboard to a "Return" key, which feels unoptimized. Additionally, inputs lacking visible `<Label>` components are inaccessible to screen readers without an explicit `aria-label`.
+**Action:** Always use `type="search"` for search inputs to trigger the native "Search" keyboard key (especially on iOS). Use `[&::-webkit-search-cancel-button]:hidden` to hide the intrusive native cancel button that conflicts with custom designs. Ensure all utility inputs without a visible label have an explicit `aria-label`.
