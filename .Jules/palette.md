@@ -1,0 +1,3 @@
+## 2024-03-14 - Search Input Mobile Optimization
+**Learning:** Using `type="search"` on inputs triggers the native "Search" action key on iOS keyboards, providing a better mobile UX. However, it also introduces default WebKit clear buttons which can conflict with custom designs. Furthermore, standalone search inputs without visible labels must have `aria-label` attributes for accessibility.
+**Action:** Always use `type="search"` with `[&::-webkit-search-cancel-button]:hidden` for custom search inputs to get the iOS keyboard benefits without the styling conflicts. Ensure `aria-label` is always present when there is no visible `<label>`.
