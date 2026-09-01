@@ -1,0 +1,3 @@
+## 2024-05-24 - Mobile Search UX & Input Accessibility
+**Learning:** iOS native search keyboards are only triggered when inputs have `type="search"`. Additionally, the native webkit clear button can conflict with custom designs, so it should be hidden with `[&::-webkit-search-cancel-button]:hidden`.
+**Action:** Always use `type="search"` with `[&::-webkit-search-cancel-button]:hidden` for search fields.
