@@ -1,0 +1,3 @@
+## 2024-05-18 - Mobile Search Keyboard and Utility Input A11y
+**Learning:** Using `type="search"` on inputs is critical for triggering the native 'Search' action on mobile keyboards, improving mobile UX significantly. Hiding the native cancel button with `[&::-webkit-search-cancel-button]:hidden` prevents it from clashing with custom designs. Additionally, utility inputs like search bars that lack a visible label component must have an explicit `aria-label` for screen reader accessibility.
+**Action:** Always use `type="search"` for search inputs, hide native cancel buttons if needed, and ensure all label-less utility inputs have an `aria-label`.
