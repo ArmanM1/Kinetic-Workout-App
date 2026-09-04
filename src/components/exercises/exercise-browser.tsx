@@ -197,10 +197,11 @@ export function ExerciseBrowser() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
           <Input
+            type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search exercises..."
-            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
+            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
 
