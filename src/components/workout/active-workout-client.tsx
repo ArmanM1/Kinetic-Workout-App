@@ -477,7 +477,9 @@ export function ActiveWorkoutClient() {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
+                type="search"
+                aria-label="Search exercises"
+                className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden"
                 placeholder="Search exercises..."
               />
             </div>
