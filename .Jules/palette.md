@@ -1,0 +1,3 @@
+## 2024-03-24 - Mobile Search UX & Webkit Overrides
+**Learning:** Adding `type="search"` to utility inputs significantly improves mobile UX by triggering native keyboard 'Search' actions instead of standard 'Return' keys, but introduces conflicting default browser UI (like webkit cancel buttons) that clash with custom dark-mode designs.
+**Action:** When implementing custom search fields in dark/styled themes, always pair `type="search"` with `[&::-webkit-search-cancel-button]:hidden` to hide the native cancel button, and ensure an explicit `aria-label` is added since placeholder text is insufficient for screen readers.
