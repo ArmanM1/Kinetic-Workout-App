@@ -1,0 +1,3 @@
+## 2026-09-21 - Mobile Search Input Enhancements
+**Learning:** For optimal mobile user experience, search inputs should utilize `type="search"` to explicitly trigger the native "Search" keyboard key on mobile devices. If a search input lacks a visible label and instead relies on an icon for context, it must have an explicit `aria-label` for screen readers. Furthermore, the native WebKit search cancel button can sometimes visually conflict with custom UI, so using `[&::-webkit-search-cancel-button]:hidden` manages these conflicts.
+**Action:** When implementing search fields going forward, apply `type="search"`, `[&::-webkit-search-cancel-button]:hidden` if there are custom cancel elements, and explicit `aria-label` attributes when there are no visible text labels.
