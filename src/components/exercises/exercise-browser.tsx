@@ -199,8 +199,10 @@ export function ExerciseBrowser() {
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            type="search"
+            aria-label="Search exercises"
             placeholder="Search exercises..."
-            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
+            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
 
