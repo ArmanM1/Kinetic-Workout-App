@@ -1,0 +1,3 @@
+## 2024-05-24 - Mobile-Optimized Search Inputs
+**Learning:** Using `type="search"` on input fields significantly improves mobile UX (especially on iOS) by triggering the native "Search" keyboard key. However, it introduces a native cancel button that can conflict with custom designs, so hiding it with `[&::-webkit-search-cancel-button]:hidden` is essential. Also, ARIA labels are crucial for icon-only inputs or inputs without visible labels.
+**Action:** Always apply `type="search"`, `aria-label`, and `[&::-webkit-search-cancel-button]:hidden` to search inputs to ensure a consistent, accessible, native-feeling mobile experience.
