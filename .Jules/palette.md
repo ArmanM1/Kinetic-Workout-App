@@ -1,0 +1,3 @@
+## 2026-10-03 - Native Mobile Keyboards for Utility Inputs
+**Learning:** In mobile-first web applications, applying `type="search"` to search inputs triggers a dedicated 'Search' key on the native iOS/Android software keyboard instead of a generic 'Return'/'Enter'. However, browsers inject a default cancel/clear button (e.g., `::-webkit-search-cancel-button`) which often conflicts with custom design systems.
+**Action:** Always pair `type="search"` with custom styling to hide the default browser cancel button (e.g., `[&::-webkit-search-cancel-button]:hidden` in Tailwind) to get the UX benefit of the native keyboard without compromising the visual design.
