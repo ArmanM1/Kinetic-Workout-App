@@ -1,0 +1,3 @@
+## 2024-11-20 - Mobile Search Input Keyboard Triggers
+**Learning:** For mobile-first React apps, setting `type="search"` on input fields is critical because it changes the native software keyboard's standard "Return" key into a prominent "Search" action key, improving the UX significantly. However, it also introduces default OS browser clear buttons which can clash with custom designs.
+**Action:** Always add `type="search"` for search fields, use `aria-label` when labels are visually hidden, and hide the native cancel button using `[&::-webkit-search-cancel-button]:hidden` to retain custom UI control.
