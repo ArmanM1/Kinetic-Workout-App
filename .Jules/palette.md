@@ -1,0 +1,3 @@
+## 2026-10-13 - Better Mobile Search Keyboard Integration
+**Learning:** On mobile devices (especially iOS), input fields used for searching should use `type="search"`. This triggers the native "Search" action key on the software keyboard, providing a significantly better user experience than the generic "Return" key. Additionally, the native webkit clear button can interfere with custom designs, so it should be hidden with `[&::-webkit-search-cancel-button]:hidden` if a custom clear action or design is used. Inputs without visual labels also critically need `aria-label` for screen readers.
+**Action:** Always use `type="search"` for search inputs, append `[&::-webkit-search-cancel-button]:hidden` to hide the native cancel button, and ensure `aria-label` is present.
