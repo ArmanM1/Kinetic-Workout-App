@@ -1,0 +1,3 @@
+## 2026-10-15 - Native Mobile Search Key and Utility Input Accessibility
+**Learning:** Using `type="search"` on search inputs triggers the native "Search" keyboard key on mobile devices (especially iOS), significantly improving the feel of the app. Hiding the native cancel button with `[&::-webkit-search-cancel-button]:hidden` ensures custom designs remain intact. Additionally, utility inputs without visible labels require an explicit `aria-label` for screen reader accessibility.
+**Action:** Always apply `type="search"`, hide the native cancel button if it conflicts with the design, and include an `aria-label` on any search inputs.
