@@ -1,0 +1,3 @@
+## 2026-10-26 - Enhance Search Inputs with Native Mobile Keyboard Support
+**Learning:** Found multiple `Input` components used for searching (`placeholder="Search..."`) across the application that lack the `type="search"` attribute. Without this, iOS/Android mobile keyboards display a standard "Return" key instead of the native "Search" key, which reduces the native app feel on mobile.
+**Action:** When implementing search inputs, always add `type="search"` and consider using `[&::-webkit-search-cancel-button]:hidden` if the native cancel button interferes with custom UI layout. This brings web inputs closer to native mobile app standard behavior.
