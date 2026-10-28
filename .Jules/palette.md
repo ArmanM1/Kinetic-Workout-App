@@ -1,0 +1,3 @@
+## 2026-10-28 - Mobile Search Keyboard UX
+**Learning:** Using `type="search"` on inputs triggers the native 'Search' action on mobile OS keyboards (like iOS), which significantly improves mobile UX compared to the default 'Go' or 'Enter' keys. The native cancel button injected by webkit can conflict with custom designs.
+**Action:** Always add `type="search"` to search inputs in mobile-first applications, and use `[&::-webkit-search-cancel-button]:hidden` to hide the native cancel button if it interferes with custom styling. Ensure explicit `aria-label` attributes are present for inputs without visible labels.
