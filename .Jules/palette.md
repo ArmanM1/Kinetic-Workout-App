@@ -1,0 +1,3 @@
+## 2026-10-29 - Mobile keyboard optimization for search inputs
+**Learning:** Using type="search" on search input fields is crucial for mobile UX (especially iOS) to trigger the native 'Search' keyboard key, rather than a default 'Return' or 'Go' key. However, it introduces a native webkit cancel button that often clashes with custom designs.
+**Action:** Always add type="search" to search inputs for mobile web apps, but pair it with '[&::-webkit-search-cancel-button]:hidden' in Tailwind (or equivalent CSS) to hide the native cancel button and maintain visual consistency. Also, always add aria-label to inputs lacking a visual label component.
