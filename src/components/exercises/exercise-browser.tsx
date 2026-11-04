@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useDeferredValue, useState } from "react";
-import { ChevronRight, Clock3, FolderHeart, Plus, Search, Sparkles, Star } from "lucide-react";
+import {
+  ChevronRight,
+  Clock3,
+  FolderHeart,
+  Plus,
+  Search,
+  Sparkles,
+  Star,
+} from "lucide-react";
 
 import { useWorkoutStore } from "@/components/providers/workout-provider";
 import { CustomExerciseDialog } from "@/components/exercises/custom-exercise-dialog";
@@ -31,7 +39,10 @@ const sortModes = [
   { id: "recent", label: "Recent" },
 ] as const;
 
-function matchesMuscleGroup(exercise: ExerciseCatalogItem, selectedGroup: string) {
+function matchesMuscleGroup(
+  exercise: ExerciseCatalogItem,
+  selectedGroup: string,
+) {
   if (selectedGroup === "all") {
     return true;
   }
@@ -47,7 +58,13 @@ function matchesMuscleGroup(exercise: ExerciseCatalogItem, selectedGroup: string
   const muscleAliases: Record<string, string[]> = {
     chest: ["chest", "pectorals"],
     back: ["back", "lats", "middle back", "lower back", "traps"],
-    shoulders: ["shoulders", "delts", "front deltoid", "side deltoid", "rear deltoid"],
+    shoulders: [
+      "shoulders",
+      "delts",
+      "front deltoid",
+      "side deltoid",
+      "rear deltoid",
+    ],
     biceps: ["biceps"],
     triceps: ["triceps"],
     quads: ["quads", "quadriceps"],
@@ -62,20 +79,20 @@ function matchesMuscleGroup(exercise: ExerciseCatalogItem, selectedGroup: string
 }
 
 export function ExerciseBrowser() {
-  const {
-    catalog,
-    recentExerciseSlugs,
-    settings,
-    toggleFavorite,
-  } = useWorkoutStore();
+  const { catalog, recentExerciseSlugs, settings, toggleFavorite } =
+    useWorkoutStore();
   const [query, setQuery] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState<(typeof muscleGroups)[number]["id"]>("all");
-  const [sortMode, setSortMode] = useState<(typeof sortModes)[number]["id"]>("alpha");
+  const [selectedGroup, setSelectedGroup] =
+    useState<(typeof muscleGroups)[number]["id"]>("all");
+  const [sortMode, setSortMode] =
+    useState<(typeof sortModes)[number]["id"]>("alpha");
   const deferredQuery = useDeferredValue(query);
 
   const favorites = settings.favoriteExerciseSlugs;
   const archived = settings.archivedExerciseSlugs;
-  const customExercises = catalog.filter((exercise) => exercise.source === "custom").length;
+  const customExercises = catalog.filter(
+    (exercise) => exercise.source === "custom",
+  ).length;
 
   const exercises = searchExercises(
     catalog.filter((exercise) => !archived.includes(exercise.slug)),
@@ -85,7 +102,8 @@ export function ExerciseBrowser() {
   const sortedExercises = [...exercises].sort((left, right) => {
     if (sortMode === "favorites") {
       const favoriteScore =
-        Number(favorites.includes(right.slug)) - Number(favorites.includes(left.slug));
+        Number(favorites.includes(right.slug)) -
+        Number(favorites.includes(left.slug));
 
       if (favoriteScore !== 0) {
         return favoriteScore;
@@ -95,8 +113,10 @@ export function ExerciseBrowser() {
     if (sortMode === "recent") {
       const leftIndex = recentExerciseSlugs.indexOf(left.slug);
       const rightIndex = recentExerciseSlugs.indexOf(right.slug);
-      const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
-      const normalizedRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+      const normalizedLeft =
+        leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+      const normalizedRight =
+        rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
 
       if (normalizedLeft !== normalizedRight) {
         return normalizedLeft - normalizedRight;
@@ -106,26 +126,29 @@ export function ExerciseBrowser() {
     return left.name.localeCompare(right.name);
   });
 
-  const groupedExercises = sortedExercises.reduce<Record<string, ExerciseCatalogItem[]>>(
-    (groups, exercise) => {
-      const key = exercise.name.charAt(0).toUpperCase();
+  const groupedExercises = sortedExercises.reduce<
+    Record<string, ExerciseCatalogItem[]>
+  >((groups, exercise) => {
+    const key = exercise.name.charAt(0).toUpperCase();
 
-      if (!groups[key]) {
-        groups[key] = [];
-      }
+    if (!groups[key]) {
+      groups[key] = [];
+    }
 
-      groups[key].push(exercise);
-      return groups;
-    },
-    {},
-  );
+    groups[key].push(exercise);
+    return groups;
+  }, {});
 
   return (
     <div className="ios-page space-y-5">
       <section className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-white">Exercises</h1>
-          <p className="mt-1 text-sm text-zinc-500">Find it fast, favorite it, and move on.</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-white">
+            Exercises
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Find it fast, favorite it, and move on.
+          </p>
         </div>
         <CustomExerciseDialog
           onCreated={({ name }) => setQuery(name)}
@@ -197,10 +220,12 @@ export function ExerciseBrowser() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
           <Input
+            type="search"
+            aria-label="Search exercises"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search exercises..."
-            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
+            className="h-12 rounded-2xl border-white/8 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
 
@@ -241,7 +266,8 @@ export function ExerciseBrowser() {
         </div>
 
         <p className="px-1 text-sm text-zinc-500">
-          {sortedExercises.length} exercise{sortedExercises.length === 1 ? "" : "s"}
+          {sortedExercises.length} exercise
+          {sortedExercises.length === 1 ? "" : "s"}
         </p>
       </section>
 
@@ -262,10 +288,16 @@ export function ExerciseBrowser() {
                         index !== group.length - 1 && "border-b border-white/6",
                       )}
                     >
-                      <Link href={`/app/exercises/${exercise.slug}`} className="min-w-0 flex-1">
-                        <p className="truncate text-lg font-medium text-white">{exercise.name}</p>
+                      <Link
+                        href={`/app/exercises/${exercise.slug}`}
+                        className="min-w-0 flex-1"
+                      >
+                        <p className="truncate text-lg font-medium text-white">
+                          {exercise.name}
+                        </p>
                         <p className="mt-1 truncate text-sm text-zinc-400">
-                          {exercise.anatomyLabel} / {exercise.equipment ?? "Bodyweight"}
+                          {exercise.anatomyLabel} /{" "}
+                          {exercise.equipment ?? "Bodyweight"}
                         </p>
                       </Link>
                       <button
@@ -278,7 +310,9 @@ export function ExerciseBrowser() {
                             : "text-zinc-500 hover:bg-white/[0.05] hover:text-white",
                         )}
                       >
-                        <Star className={cn("size-4", favorite && "fill-current")} />
+                        <Star
+                          className={cn("size-4", favorite && "fill-current")}
+                        />
                         <span className="sr-only">
                           {favorite ? "Remove favorite" : "Add favorite"}
                         </span>
@@ -307,13 +341,20 @@ export function ExerciseBrowser() {
                 key={exercise.slug}
                 className={cn(
                   "flex items-center gap-3 px-4 py-4",
-                  index !== sortedExercises.length - 1 && "border-b border-white/6",
+                  index !== sortedExercises.length - 1 &&
+                    "border-b border-white/6",
                 )}
               >
-                <Link href={`/app/exercises/${exercise.slug}`} className="min-w-0 flex-1">
-                  <p className="truncate text-lg font-medium text-white">{exercise.name}</p>
+                <Link
+                  href={`/app/exercises/${exercise.slug}`}
+                  className="min-w-0 flex-1"
+                >
+                  <p className="truncate text-lg font-medium text-white">
+                    {exercise.name}
+                  </p>
                   <p className="mt-1 truncate text-sm text-zinc-400">
-                    {exercise.anatomyLabel} / {exercise.equipment ?? "Bodyweight"}
+                    {exercise.anatomyLabel} /{" "}
+                    {exercise.equipment ?? "Bodyweight"}
                   </p>
                 </Link>
                 <button

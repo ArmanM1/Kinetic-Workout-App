@@ -99,14 +99,16 @@ export function ActiveWorkoutClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [librarySection, setLibrarySection] = useState<"quick" | "all" | "favorites" | "recent">(
-    "quick",
-  );
+  const [librarySection, setLibrarySection] = useState<
+    "quick" | "all" | "favorites" | "recent"
+  >("quick");
   const [finishDialogOpen, setFinishDialogOpen] = useState(false);
   const [finishTitle, setFinishTitle] = useState("");
   const [finishNotes, setFinishNotes] = useState("");
   const [restNow, setRestNow] = useState(0);
-  const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(null);
+  const [dismissedTimerKey, setDismissedTimerKey] = useState<string | null>(
+    null,
+  );
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [prefersDockEditor, setPrefersDockEditor] = useState(false);
   const [pendingDeleteSet, setPendingDeleteSet] = useState<{
@@ -119,7 +121,9 @@ export function ActiveWorkoutClient() {
     exerciseId: string;
     exerciseName: string;
   } | null>(null);
-  const [draggedExerciseIndex, setDraggedExerciseIndex] = useState<number | null>(null);
+  const [draggedExerciseIndex, setDraggedExerciseIndex] = useState<
+    number | null
+  >(null);
   const draggedExerciseIndexRef = useRef<number | null>(null);
   const [discardAlertOpen, setDiscardAlertOpen] = useState(false);
   const dockLoadInputRef = useRef<HTMLInputElement>(null);
@@ -185,18 +189,22 @@ export function ActiveWorkoutClient() {
   const visibleCatalog = catalog.filter(
     (exercise) => !settings.archivedExerciseSlugs.includes(exercise.slug),
   );
-  const catalogBySlug = new Map(catalog.map((exercise) => [exercise.slug, exercise]));
+  const catalogBySlug = new Map(
+    catalog.map((exercise) => [exercise.slug, exercise]),
+  );
   const quickExercises = Array.from(
-    new Set([
-      ...settings.favoriteExerciseSlugs,
-      ...recentExerciseSlugs,
-    ]),
+    new Set([...settings.favoriteExerciseSlugs, ...recentExerciseSlugs]),
   )
-    .map((slug) => visibleCatalog.find((exercise) => exercise.slug === slug) ?? null)
+    .map(
+      (slug) =>
+        visibleCatalog.find((exercise) => exercise.slug === slug) ?? null,
+    )
     .filter((exercise): exercise is ExerciseCatalogItem => exercise !== null)
     .slice(0, 8);
   const activeLibrarySection =
-    librarySection === "quick" && quickExercises.length === 0 ? "all" : librarySection;
+    librarySection === "quick" && quickExercises.length === 0
+      ? "all"
+      : librarySection;
   const librarySource =
     activeLibrarySection === "quick"
       ? quickExercises
@@ -215,28 +223,36 @@ export function ActiveWorkoutClient() {
     source: "all",
   }).slice(0, 24);
   const activeExercise =
-    activeSession?.exercises.find((exercise) => exercise.id === activeSession?.activeExerciseId) ??
-    null;
+    activeSession?.exercises.find(
+      (exercise) => exercise.id === activeSession?.activeExerciseId,
+    ) ?? null;
   const activeSet =
-    activeExercise?.sets.find((set) => set.id === activeSession?.activeSetId) ?? null;
+    activeExercise?.sets.find((set) => set.id === activeSession?.activeSetId) ??
+    null;
   const workoutTitle = activeSession?.title.trim() || "Blank Workout";
   const activeSetHasValues = Boolean(
     activeSet &&
-      (activeSet.draftWeight != null ||
-        activeSet.draftReps != null ||
-        activeSet.previousWeight != null ||
-        activeSet.previousReps != null ||
-        activeSet.assistAmount != null),
+    (activeSet.draftWeight != null ||
+      activeSet.draftReps != null ||
+      activeSet.previousWeight != null ||
+      activeSet.previousReps != null ||
+      activeSet.assistAmount != null),
   );
   const restSecondsRemaining = activeSession?.restTimerEndsAt
-    ? Math.max(0, Math.ceil((new Date(activeSession.restTimerEndsAt).getTime() - restNow) / 1000))
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(activeSession.restTimerEndsAt).getTime() - restNow) / 1000,
+        ),
+      )
     : 0;
   const isRestTimerVisible =
-    restSecondsRemaining > 0 && dismissedTimerKey !== activeSession?.restTimerEndsAt;
+    restSecondsRemaining > 0 &&
+    dismissedTimerKey !== activeSession?.restTimerEndsAt;
   const activeLoadValue =
     activeExercise?.tag === "assisted"
-      ? activeSet?.assistAmount ?? ""
-      : activeSet?.draftWeight ?? "";
+      ? (activeSet?.assistAmount ?? "")
+      : (activeSet?.draftWeight ?? "");
   const activeRepsValue = activeSet?.draftReps ?? "";
   const isKeyboardOpen = keyboardInset > 0;
   const isDockEditorOpen = Boolean(prefersDockEditor && activeSet);
@@ -262,7 +278,11 @@ export function ActiveWorkoutClient() {
   function focusSet(
     exerciseId: string,
     setId: string,
-    options?: { field?: "load" | "reps"; openDock?: boolean; maintainDock?: boolean },
+    options?: {
+      field?: "load" | "reps";
+      openDock?: boolean;
+      maintainDock?: boolean;
+    },
   ) {
     if (options?.field) {
       dockFieldRef.current = options.field;
@@ -281,10 +301,7 @@ export function ActiveWorkoutClient() {
     }, 80);
   }
 
-  function handleActiveSetDraftUpdate(
-    field: "load" | "reps",
-    value: string,
-  ) {
+  function handleActiveSetDraftUpdate(field: "load" | "reps", value: string) {
     if (!activeExercise || !activeSet) {
       return;
     }
@@ -382,7 +399,8 @@ export function ActiveWorkoutClient() {
     }
 
     const field = pendingDockFocusRef.current;
-    const target = field === "reps" ? dockRepsInputRef.current : dockLoadInputRef.current;
+    const target =
+      field === "reps" ? dockRepsInputRef.current : dockLoadInputRef.current;
     const timeout = window.setTimeout(() => {
       target?.focus();
       target?.select();
@@ -416,7 +434,9 @@ export function ActiveWorkoutClient() {
         <Card className="border-white/10 bg-white/[0.04] text-white">
           <CardContent className="space-y-4 p-5">
             <div>
-              <p className="text-3xl font-semibold tracking-tight">No workout live</p>
+              <p className="text-3xl font-semibold tracking-tight">
+                No workout live
+              </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -441,17 +461,26 @@ export function ActiveWorkoutClient() {
 
   return (
     <>
-      <Drawer open={libraryOpen} onOpenChange={setLibraryOpen} fixed repositionInputs={false}>
+      <Drawer
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        fixed
+        repositionInputs={false}
+      >
         <DrawerContent
           className="border-white/10 bg-zinc-950 text-white shadow-[0_-24px_80px_-45px_rgba(196,255,57,0.25)]"
           style={{
             bottom: keyboardInset ? `${keyboardInset}px` : undefined,
-            maxHeight: keyboardInset ? `calc(100dvh - ${keyboardInset + 12}px)` : "92dvh",
+            maxHeight: keyboardInset
+              ? `calc(100dvh - ${keyboardInset + 12}px)`
+              : "92dvh",
           }}
         >
           <DrawerHeader className="px-5 pb-2 pt-5 text-left">
             <div className="flex items-center justify-between gap-3">
-              <DrawerTitle className="text-left text-lg text-white">Add exercise</DrawerTitle>
+              <DrawerTitle className="text-left text-lg text-white">
+                Add exercise
+              </DrawerTitle>
               <CustomExerciseDialog
                 description="Create and add something unique without leaving the workout."
                 onCreated={({ name, slug }) => {
@@ -475,9 +504,11 @@ export function ActiveWorkoutClient() {
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <Input
+                type="search"
+                aria-label="Search exercises"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500"
+                className="h-12 rounded-2xl border-white/10 bg-white/[0.03] pl-11 text-white placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden"
                 placeholder="Search exercises..."
               />
             </div>
@@ -485,7 +516,11 @@ export function ActiveWorkoutClient() {
               {[
                 { id: "quick" as const, label: "Quick", icon: Zap },
                 { id: "all" as const, label: "All", icon: Search },
-                { id: "favorites" as const, label: "Favorites", icon: FolderHeart },
+                {
+                  id: "favorites" as const,
+                  label: "Favorites",
+                  icon: FolderHeart,
+                },
                 { id: "recent" as const, label: "Recent", icon: Sparkles },
               ].map((item) => {
                 const Icon = item.icon;
@@ -517,9 +552,12 @@ export function ActiveWorkoutClient() {
                   className="lift-tap flex w-full items-center justify-between rounded-[1.7rem] border border-white/8 bg-white/[0.03] px-4 py-4 text-left transition hover:border-lime-300/20 hover:bg-white/[0.05]"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-base font-medium text-white">{exercise.name}</p>
+                    <p className="truncate text-base font-medium text-white">
+                      {exercise.name}
+                    </p>
                     <p className="mt-1 truncate text-sm text-zinc-400">
-                      {exercise.anatomyLabel} / {exercise.equipment ?? "Bodyweight"}
+                      {exercise.anatomyLabel} /{" "}
+                      {exercise.equipment ?? "Bodyweight"}
                     </p>
                   </div>
                   <div className="flex size-10 items-center justify-center rounded-2xl bg-lime-300 text-zinc-950">
@@ -529,7 +567,9 @@ export function ActiveWorkoutClient() {
               ))}
               {filteredExercises.length === 0 ? (
                 <div className="rounded-[1.4rem] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center">
-                  <p className="text-sm font-medium text-white">Nothing here yet</p>
+                  <p className="text-sm font-medium text-white">
+                    Nothing here yet
+                  </p>
                   <p className="mt-1 text-xs text-zinc-500">
                     Try another section or create a custom exercise.
                   </p>
@@ -559,7 +599,10 @@ export function ActiveWorkoutClient() {
               placeholder="Optional note for this session."
             />
             <div className="grid gap-2 sm:grid-cols-3">
-              <Button variant="outline" onClick={() => setFinishDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setFinishDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
@@ -590,7 +633,8 @@ export function ActiveWorkoutClient() {
             </AlertDialogMedia>
             <AlertDialogTitle>Discard this workout?</AlertDialogTitle>
             <AlertDialogDescription className="text-zinc-400">
-              This clears the live session and removes any unfinished progress from the screen.
+              This clears the live session and removes any unfinished progress
+              from the screen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="border-white/10 bg-white/[0.03]">
@@ -695,25 +739,36 @@ export function ActiveWorkoutClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="ios-page space-y-4" style={{ paddingBottom: `${workoutBottomPadding}px` }}>
+      <div
+        className="ios-page space-y-4"
+        style={{ paddingBottom: `${workoutBottomPadding}px` }}
+      >
         <section className="ios-card space-y-4 rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 text-white">
           <div className="flex items-start justify-between gap-3">
             <div>
               <Badge className="border border-lime-300/20 bg-lime-300/10 text-lime-100">
-                {activeSession.entryPoint === "blank" ? "Blank workout" : "Split day"}
+                {activeSession.entryPoint === "blank"
+                  ? "Blank workout"
+                  : "Split day"}
               </Badge>
               {activeSession.entryPoint === "blank" ? (
                 <Input
                   value={activeSession.title}
-                  onChange={(event) => updateActiveSessionTitle(event.target.value)}
+                  onChange={(event) =>
+                    updateActiveSessionTitle(event.target.value)
+                  }
                   onBlur={(event) =>
-                    updateActiveSessionTitle(event.target.value.trim() || "Blank Workout")
+                    updateActiveSessionTitle(
+                      event.target.value.trim() || "Blank Workout",
+                    )
                   }
                   placeholder="Blank Workout"
                   className="mt-3 h-auto border-0 bg-transparent p-0 text-4xl font-semibold tracking-tight text-white shadow-none placeholder:text-white focus-visible:ring-0"
                 />
               ) : (
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">{workoutTitle}</h1>
+                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                  {workoutTitle}
+                </h1>
               )}
               <p className="mt-2 text-sm text-zinc-500">
                 {new Intl.DateTimeFormat("en-US", {
@@ -737,7 +792,9 @@ export function ActiveWorkoutClient() {
           <div className="flex flex-wrap gap-2">
             {activeExercise && activeSet ? (
               <div className="flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-3 py-2 text-xs uppercase tracking-[0.22em] text-lime-100">
-                <span className="truncate">{activeExercise.exerciseName} / Set {activeSet.setNumber}</span>
+                <span className="truncate">
+                  {activeExercise.exerciseName} / Set {activeSet.setNumber}
+                </span>
                 <button
                   type="button"
                   onClick={clearSetSelection}
@@ -749,7 +806,9 @@ export function ActiveWorkoutClient() {
               </div>
             ) : null}
             {profile.bodyWeight == null &&
-            activeSession.exercises.some((exercise) => exercise.tag === "assisted") ? (
+            activeSession.exercises.some(
+              (exercise) => exercise.tag === "assisted",
+            ) ? (
               <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs uppercase tracking-[0.22em] text-amber-100">
                 Set body weight
               </div>
@@ -779,7 +838,9 @@ export function ActiveWorkoutClient() {
                 catalogExercise?.primaryMuscles[0] ??
                 "Full body";
               const previousSession = history.find((session) =>
-                session.exercises.some((entry) => entry.exerciseSlug === exercise.exerciseSlug),
+                session.exercises.some(
+                  (entry) => entry.exerciseSlug === exercise.exerciseSlug,
+                ),
               );
               const estimatedOneRepMax = calculateExerciseEstimatedOneRepMax(
                 exercise,
@@ -797,9 +858,13 @@ export function ActiveWorkoutClient() {
                   }}
                   onDrop={(event) => {
                     event.preventDefault();
-                    const fromIndex = Number(event.dataTransfer.getData("text/plain"));
+                    const fromIndex = Number(
+                      event.dataTransfer.getData("text/plain"),
+                    );
                     handleMoveExercise(
-                      Number.isNaN(fromIndex) ? draggedExerciseIndex ?? exerciseIndex : fromIndex,
+                      Number.isNaN(fromIndex)
+                        ? (draggedExerciseIndex ?? exerciseIndex)
+                        : fromIndex,
                       exerciseIndex,
                     );
                   }}
@@ -818,7 +883,10 @@ export function ActiveWorkoutClient() {
                             draggable
                             onDragStart={(event) => {
                               event.dataTransfer.effectAllowed = "move";
-                              event.dataTransfer.setData("text/plain", String(exerciseIndex));
+                              event.dataTransfer.setData(
+                                "text/plain",
+                                String(exerciseIndex),
+                              );
                               draggedExerciseIndexRef.current = exerciseIndex;
                               setDraggedExerciseIndex(exerciseIndex);
                             }}
@@ -827,13 +895,18 @@ export function ActiveWorkoutClient() {
                                 return;
                               }
 
-                              event.currentTarget.setPointerCapture(event.pointerId);
+                              event.currentTarget.setPointerCapture(
+                                event.pointerId,
+                              );
                               draggedExerciseIndexRef.current = exerciseIndex;
                               setDraggedExerciseIndex(exerciseIndex);
                             }}
                             onPointerMove={(event) => {
                               if (event.pointerType !== "mouse") {
-                                handleExercisePointerMove(event.clientX, event.clientY);
+                                handleExercisePointerMove(
+                                  event.clientX,
+                                  event.clientY,
+                                );
                               }
                             }}
                             onPointerUp={finishExerciseDrag}
@@ -845,7 +918,9 @@ export function ActiveWorkoutClient() {
                           </button>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate text-xl font-semibold">{exercise.exerciseName}</p>
+                              <p className="truncate text-xl font-semibold">
+                                {exercise.exerciseName}
+                              </p>
                               <Badge
                                 variant="outline"
                                 className="border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
@@ -878,15 +953,21 @@ export function ActiveWorkoutClient() {
                               1RM
                             </p>
                             <p className="mt-1 text-[0.78rem] font-semibold leading-none text-sky-300">
-                              {estimatedOneRepMax > 0 ? estimatedOneRepMax : "--"}
+                              {estimatedOneRepMax > 0
+                                ? estimatedOneRepMax
+                                : "--"}
                             </p>
                           </div>
                           <button
                             type="button"
-                            onClick={() => toggleFavorite(exercise.exerciseSlug)}
+                            onClick={() =>
+                              toggleFavorite(exercise.exerciseSlug)
+                            }
                             className={cn(
                               "flex size-10 shrink-0 items-center justify-center rounded-2xl border transition",
-                              settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug)
+                              settings.favoriteExerciseSlugs.includes(
+                                exercise.exerciseSlug,
+                              )
                                 ? "border-lime-300/20 bg-lime-300/10 text-lime-300"
                                 : "border-white/10 bg-black/20 text-zinc-500 hover:text-white",
                             )}
@@ -894,8 +975,9 @@ export function ActiveWorkoutClient() {
                             <Heart
                               className={cn(
                                 "size-4",
-                                settings.favoriteExerciseSlugs.includes(exercise.exerciseSlug) &&
-                                  "fill-current",
+                                settings.favoriteExerciseSlugs.includes(
+                                  exercise.exerciseSlug,
+                                ) && "fill-current",
                               )}
                             />
                             <span className="sr-only">Toggle favorite</span>
@@ -919,7 +1001,11 @@ export function ActiveWorkoutClient() {
 
                     <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 border-b border-white/6 px-4 py-2 text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
                       <span>Set</span>
-                      <span>{exercise.tag === "assisted" ? "Assist" : profile.weightUnit}</span>
+                      <span>
+                        {exercise.tag === "assisted"
+                          ? "Assist"
+                          : profile.weightUnit}
+                      </span>
                       <span>Reps</span>
                       <span />
                     </div>
@@ -928,7 +1014,9 @@ export function ActiveWorkoutClient() {
                       const isActive = set.id === activeSession.activeSetId;
                       const isLogged = Boolean(set.completedAt);
                       const loadValue =
-                        exercise.tag === "assisted" ? set.assistAmount ?? "" : set.draftWeight ?? "";
+                        exercise.tag === "assisted"
+                          ? (set.assistAmount ?? "")
+                          : (set.draftWeight ?? "");
 
                       return (
                         <div
@@ -938,8 +1026,12 @@ export function ActiveWorkoutClient() {
                             "mx-3 mb-3 rounded-[1.35rem] border px-3 py-3 transition",
                             isActive &&
                               "border-lime-300/50 bg-lime-300/12 shadow-[0_18px_50px_-38px_rgba(196,255,57,1)]",
-                            isLogged && !isActive && "border-white/6 bg-white/[0.03]",
-                            !isActive && !isLogged && "border-transparent bg-black/20",
+                            isLogged &&
+                              !isActive &&
+                              "border-white/6 bg-white/[0.03]",
+                            !isActive &&
+                              !isLogged &&
+                              "border-transparent bg-black/20",
                           )}
                           onClick={() =>
                             focusSet(exercise.id, set.id, {
@@ -949,7 +1041,7 @@ export function ActiveWorkoutClient() {
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                            <button
+                              <button
                                 type="button"
                                 className={cn(
                                   "flex h-10 w-10 items-center justify-center rounded-xl text-base font-semibold transition",
@@ -963,11 +1055,14 @@ export function ActiveWorkoutClient() {
                                   })
                                 }
                               >
-                              {setIndex + 1}
+                                {setIndex + 1}
                               </button>
-                              {set.previousWeight != null || set.previousReps != null ? (
+                              {set.previousWeight != null ||
+                              set.previousReps != null ? (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-500">
-                                  {set.previousWeight ?? "-"} {profile.weightUnit} x {set.previousReps ?? "-"}
+                                  {set.previousWeight ?? "-"}{" "}
+                                  {profile.weightUnit} x{" "}
+                                  {set.previousReps ?? "-"}
                                 </p>
                               ) : (
                                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-zinc-600">
@@ -1010,7 +1105,10 @@ export function ActiveWorkoutClient() {
                                     : "border-white/10 bg-black/20 text-zinc-300",
                                 )}
                               >
-                                {loadValue || (exercise.tag === "assisted" ? "Assist" : "Weight")}
+                                {loadValue ||
+                                  (exercise.tag === "assisted"
+                                    ? "Assist"
+                                    : "Weight")}
                               </button>
                               <button
                                 type="button"
@@ -1039,7 +1137,11 @@ export function ActiveWorkoutClient() {
                             <div className="mt-3 grid grid-cols-2 gap-2">
                               <Input
                                 value={loadValue}
-                                inputMode={exercise.tag === "assisted" ? "numeric" : "decimal"}
+                                inputMode={
+                                  exercise.tag === "assisted"
+                                    ? "numeric"
+                                    : "decimal"
+                                }
                                 enterKeyHint="next"
                                 autoComplete="off"
                                 pattern="[0-9]*[.,]?[0-9]*"
@@ -1050,8 +1152,11 @@ export function ActiveWorkoutClient() {
                                 }
                                 onChange={(event) =>
                                   updateDraft(exercise.id, set.id, {
-                                    [exercise.tag === "assisted" ? "assistAmount" : "draftWeight"]:
-                                      parseNumericInput(event.target.value),
+                                    [exercise.tag === "assisted"
+                                      ? "assistAmount"
+                                      : "draftWeight"]: parseNumericInput(
+                                      event.target.value,
+                                    ),
                                   })
                                 }
                                 className={cn(
@@ -1060,7 +1165,11 @@ export function ActiveWorkoutClient() {
                                     ? "border-lime-300/40 bg-lime-300/10"
                                     : "border-white/10 bg-black/20",
                                 )}
-                                placeholder={exercise.tag === "assisted" ? "Assist" : "Weight"}
+                                placeholder={
+                                  exercise.tag === "assisted"
+                                    ? "Assist"
+                                    : "Weight"
+                                }
                               />
                               <Input
                                 value={set.draftReps ?? ""}
@@ -1075,7 +1184,9 @@ export function ActiveWorkoutClient() {
                                 }
                                 onChange={(event) =>
                                   updateDraft(exercise.id, set.id, {
-                                    draftReps: parseNumericInput(event.target.value),
+                                    draftReps: parseNumericInput(
+                                      event.target.value,
+                                    ),
                                   })
                                 }
                                 className={cn(
@@ -1094,7 +1205,8 @@ export function ActiveWorkoutClient() {
 
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                       <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-                        {activeSession.activeExerciseId === exercise.id && activeSet
+                        {activeSession.activeExerciseId === exercise.id &&
+                        activeSet
                           ? `${activeSet.previousWeight ?? "-"} ${profile.weightUnit} x ${activeSet.previousReps ?? "-"}`
                           : `${exercise.sets.length} sets`}
                       </p>
@@ -1129,12 +1241,18 @@ export function ActiveWorkoutClient() {
         >
           <div className="flex items-center gap-3 rounded-[1.4rem] border border-lime-300/20 bg-zinc-950/95 px-4 py-3 text-white shadow-[0_20px_50px_-35px_rgba(0,0,0,0.95)] backdrop-blur">
             <div>
-              <p className="text-[0.65rem] uppercase tracking-[0.24em] text-lime-200/70">Rest</p>
-              <p className="text-2xl font-semibold">{formatTimer(restSecondsRemaining)}</p>
+              <p className="text-[0.65rem] uppercase tracking-[0.24em] text-lime-200/70">
+                Rest
+              </p>
+              <p className="text-2xl font-semibold">
+                {formatTimer(restSecondsRemaining)}
+              </p>
             </div>
             <button
               type="button"
-              onClick={() => setDismissedTimerKey(activeSession.restTimerEndsAt)}
+              onClick={() =>
+                setDismissedTimerKey(activeSession.restTimerEndsAt)
+              }
               className="flex size-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/[0.05] hover:text-white"
             >
               <X className="size-4" />
@@ -1152,10 +1270,13 @@ export function ActiveWorkoutClient() {
           <div className="rounded-[1.65rem] border border-white/10 bg-zinc-950/96 p-3 text-white shadow-[0_24px_70px_-36px_rgba(0,0,0,0.92)] backdrop-blur">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white">{activeExercise.exerciseName}</p>
+                <p className="truncate text-sm font-medium text-white">
+                  {activeExercise.exerciseName}
+                </p>
                 <p className="mt-1 text-[0.68rem] uppercase tracking-[0.22em] text-lime-200/70">
                   Set {activeSet.setNumber}
-                  {activeSet.previousWeight != null || activeSet.previousReps != null
+                  {activeSet.previousWeight != null ||
+                  activeSet.previousReps != null
                     ? ` / ${activeSet.previousWeight ?? "-"} ${profile.weightUnit} x ${activeSet.previousReps ?? "-"}`
                     : ""}
                 </p>
@@ -1174,7 +1295,9 @@ export function ActiveWorkoutClient() {
               <Input
                 ref={dockLoadInputRef}
                 value={activeLoadValue}
-                inputMode={activeExercise.tag === "assisted" ? "numeric" : "decimal"}
+                inputMode={
+                  activeExercise.tag === "assisted" ? "numeric" : "decimal"
+                }
                 enterKeyHint="next"
                 autoComplete="off"
                 pattern="[0-9]*[.,]?[0-9]*"
@@ -1191,7 +1314,9 @@ export function ActiveWorkoutClient() {
                   handleActiveSetDraftUpdate("load", event.target.value)
                 }
                 className="h-12 rounded-2xl border-lime-300/40 bg-lime-300/10 px-4 text-base font-medium text-white shadow-none placeholder:text-zinc-500 focus-visible:ring-0"
-                placeholder={activeExercise.tag === "assisted" ? "Assist" : "Weight"}
+                placeholder={
+                  activeExercise.tag === "assisted" ? "Assist" : "Weight"
+                }
               />
               <Input
                 ref={dockRepsInputRef}
