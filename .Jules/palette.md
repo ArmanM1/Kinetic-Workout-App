@@ -1,0 +1,3 @@
+## 2026-11-04 - Improve mobile keyboard UX for search inputs
+**Learning:** Using `type="search"` triggers the native 'Search' key on iOS and Android virtual keyboards, making the interaction feel more like a native app. The `aria-label` improves accessibility since the inputs don't have visible label components. Added `[&::-webkit-search-cancel-button]:hidden` to hide the native Safari cancel button to avoid layout inconsistencies with custom designs.
+**Action:** Always add `type="search"` to search utility inputs and explicitly add an `aria-label` when a visible label is missing, plus handle the native cancel button styles.
