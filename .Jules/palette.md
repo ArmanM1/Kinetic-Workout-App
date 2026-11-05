@@ -1,0 +1,3 @@
+## 2026-11-05 - Mobile keyboard optimization for search inputs
+**Learning:** For mobile web apps (especially iOS), using `type="search"` on search input fields triggers the native "Search" keyboard key, significantly improving mobile UX. However, to prevent native webkit cancel buttons from interfering with custom designs, it is critical to also append `[&::-webkit-search-cancel-button]:hidden`.
+**Action:** Always pair `type="search"` with the hidden cancel button utility class when building custom search bars for mobile web apps, and ensure an explicit `aria-label` is included when there is no visible label component.
