@@ -1,0 +1,3 @@
+## 2026-11-08 - Improve search input UX on mobile
+**Learning:** Using `type="search"` on search inputs triggers the native mobile keyboard's "Search" action key instead of a standard return/enter key. Hiding the native webkit search cancel button (`[&::-webkit-search-cancel-button]:hidden`) ensures it doesn't conflict with custom UI search icons. Using `aria-label` provides necessary screen reader context for utility inputs missing visible labels.
+**Action:** Always add `type="search"`, `aria-label`, and `[&::-webkit-search-cancel-button]:hidden` to search inputs to provide better mobile native feel and accessibility.
