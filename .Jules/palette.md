@@ -1,0 +1,3 @@
+## 2026-11-09 - Native mobile keyboard for search inputs
+**Learning:** Using `type="search"` on inputs is essential for mobile-first apps as it triggers the native iOS/Android search keyboard key, significantly improving the UX for searching lists. Using `[&::-webkit-search-cancel-button]:hidden` prevents the native clear button from appearing which clashes with custom designs. ARIA labels are also required for icon-only inputs or utility inputs without visible label components.
+**Action:** Always add `type="search"`, `aria-label="Search [entity]"`, and `[&::-webkit-search-cancel-button]:hidden` to search inputs in mobile-focused web apps.
